@@ -1,5 +1,6 @@
 const std = @import("std");
 
+const clw_ecs = @import("libs/clowder_ecs/build.zig");
 const clw_math = @import("libs/clowder_math/build.zig");
 const clw_window = @import("libs/clowder_window/build.zig");
 
@@ -40,19 +41,20 @@ pub fn build(b: *std.Build) void {
 }
 
 pub fn link(b: *std.Build, step: *CompileStep) *Module {
-    const clw_math_module = clw_math.link(b, step);
-    const clw_window_module = clw_window.link(b, step);
-
     const module = b.createModule(.{
         .source_file = .{ .path = thisPath("/src/main.zig") },
         .dependencies = &.{
             .{
+                .name = "clowder_ecs",
+                .module = clw_ecs.link(b, step),
+            },
+            .{
                 .name = "clowder_math",
-                .module = clw_math_module,
+                .module = clw_math.link(b, step),
             },
             .{
                 .name = "clowder_window",
-                .module = clw_window_module,
+                .module = clw_window.link(b, step),
             },
         },
     });

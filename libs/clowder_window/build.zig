@@ -37,8 +37,6 @@ pub fn build(b: *std.Build) void {
 }
 
 pub fn link(b: *std.Build, step: *CompileStep) *Module {
-    const clw_math_module = clw_math.link(b, step);
-
     step.linkLibC();
 
     const module = b.createModule(.{
@@ -46,7 +44,7 @@ pub fn link(b: *std.Build, step: *CompileStep) *Module {
         .dependencies = &.{
             .{
                 .name = "clowder_math",
-                .module = clw_math_module,
+                .module = clw_math.link(b, step),
             },
         },
     });
