@@ -1,5 +1,8 @@
 const std = @import("std");
 
+const CompileStep = std.Build.Step.Compile;
+const Module = std.Build.Module;
+
 fn thisPath(comptime suffix: []const u8) []const u8 {
     return comptime (std.fs.path.dirname(@src().file) orelse ".") ++ suffix;
 }
@@ -15,6 +18,8 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    link(b, lib);
+
     b.installArtifact(lib);
 
     const main_tests = b.addTest(.{
@@ -29,11 +34,12 @@ pub fn build(b: *std.Build) void {
     test_step.dependOn(&run_main_tests.step);
 }
 
-pub fn link(b: *std.Build, step: *std.Step.Compile) void {
-    step.linkLibC();
-
-    step.addModule(b.createModule(.{
+pub fn link(b: *std.Build, step: *CompileStep) *Module {
+    const module = b.createModule(.{
         .source_file = .{ .path = thisPath("/src/main.zig") },
-        .dependencies = &.{},
-    }));
+    });
+
+    step.addModule("clowder_math", module);
+
+    return module;
 }

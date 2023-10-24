@@ -13,8 +13,8 @@ pub fn getSize(screen: Screen) Vec2u {
 
     switch (screen) {
         .primary => {
-            size[0] = c.GetSystemMetrics(c.SM_CXSCREEN);
-            size[1] = c.GetSystemMetrics(c.SM_CYSCREEN);
+            size[0] = @intCast(c.GetSystemMetrics(c.SM_CXSCREEN));
+            size[1] = @intCast(c.GetSystemMetrics(c.SM_CYSCREEN));
         },
     }
 

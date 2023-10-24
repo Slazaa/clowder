@@ -1,10 +1,25 @@
 const std = @import("std");
+
 const testing = std.testing;
 
-export fn add(a: i32, b: i32) i32 {
-    return a + b;
-}
+const clw_window = @import("clowder_window");
 
-test "basic add functionality" {
-    try testing.expect(add(3, 7) == 10);
+const Window = clw_window.Window;
+
+test "Basic test" {
+    const allocator = testing.allocator;
+
+    var window = try Window.init(
+        allocator,
+        "Test window",
+        .center,
+        .{ 800, 600 },
+        true,
+    );
+
+    defer window.deinit();
+
+    while (window.open) {
+        try window.update();
+    }
 }
