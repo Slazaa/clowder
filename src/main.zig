@@ -1,25 +1,9 @@
-const std = @import("std");
+pub const ecs = @import("clowder_ecs");
+pub const math = @import("clowder_math");
+pub const render = @import("clowder_render");
+pub const window = @import("clowder_window");
 
-const testing = std.testing;
-
-const clw_window = @import("clowder_window");
-
-const Window = clw_window.Window;
-
-test "Basic test" {
-    const allocator = testing.allocator;
-
-    var window = try Window.init(
-        allocator,
-        "Test window",
-        .center,
-        .{ 800, 600 },
-        true,
-    );
-
-    defer window.deinit();
-
-    while (window.open) {
-        try window.update();
-    }
-}
+pub usingnamespace ecs;
+pub usingnamespace math;
+pub usingnamespace render;
+pub usingnamespace window;

@@ -30,6 +30,10 @@ pub const WindowPos = union(enum) {
     at: Vec2i,
 };
 
+pub const RenderBackend = enum {
+    opengl,
+};
+
 pub const Event = union(enum) {
     close,
 };
@@ -38,11 +42,19 @@ pub const Window = struct {
     const Self = @This();
 
     base: WindowBase,
+    render_backend: RenderBackend = .opengl,
     close_on_event: bool,
     open: bool = true,
     events: AutoArrayHashMap(Event, void),
 
-    pub fn init(allocator: Allocator, title: [:0]const u8, position: WindowPos, size: Vec2u, close_on_event: bool) WindowError!Self {
+    pub fn init(
+        allocator: Allocator,
+        title: [:0]const u8,
+        position: WindowPos,
+        size: Vec2u,
+        render_backend: RenderBackend,
+        close_on_event: bool,
+    ) WindowError!Self {
         const position_vec = switch (position) {
             .center => @as(Vec2i, @intCast(screen.getSize(.primary) - size)) / Vec2i{ 2, 2 },
             .at => |at| at,
@@ -50,6 +62,7 @@ pub const Window = struct {
 
         return .{
             .base = try WindowBase.init(title, position_vec[0], position_vec[1], size[0], size[1]),
+            .render_backend = render_backend,
             .close_on_event = close_on_event,
             .events = AutoArrayHashMap(Event, void).init(allocator),
         };

@@ -1,17 +1,33 @@
 const std = @import("std");
 
+const Build = std.Build;
+const CompileStep = Build.Step.Compile;
+const Module = Build.Module;
+
 const clw_ecs = @import("libs/clowder_ecs/build.zig");
 const clw_math = @import("libs/clowder_math/build.zig");
+const clw_render = @import("libs/clowder_render/build.zig");
 const clw_window = @import("libs/clowder_window/build.zig");
 
-const CompileStep = std.Build.Step.Compile;
-const Module = std.Build.Module;
+const triangle = @import("examples/triangle/build.zig");
 
 fn thisPath(comptime suffix: []const u8) []const u8 {
     return comptime (std.fs.path.dirname(@src().file) orelse ".") ++ suffix;
 }
 
-pub fn build(b: *std.Build) void {
+fn install(b: *Build, step: *CompileStep, comptime name: []const u8) void {
+    const install_step = b.step(name, "Build '" ++ name ++ "' demo");
+    install_step.dependOn(&b.addInstallArtifact(step, .{}).step);
+
+    const run_step = b.step(name ++ "-example", "Run '" ++ name ++ "' demo");
+    const run_cmd = b.addRunArtifact(step);
+    run_cmd.step.dependOn(install_step);
+    run_step.dependOn(&run_cmd.step);
+
+    b.getInstallStep().dependOn(install_step);
+}
+
+pub fn build(b: *Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
@@ -26,21 +42,10 @@ pub fn build(b: *std.Build) void {
 
     b.installArtifact(lib);
 
-    const main_tests = b.addTest(.{
-        .root_source_file = .{ .path = "src/main.zig" },
-        .target = target,
-        .optimize = optimize,
-    });
-
-    _ = link(b, main_tests);
-
-    const run_main_tests = b.addRunArtifact(main_tests);
-
-    const test_step = b.step("test", "Run library tests");
-    test_step.dependOn(&run_main_tests.step);
+    install(b, triangle.build(b, target, optimize), "triangle");
 }
 
-pub fn link(b: *std.Build, step: *CompileStep) *Module {
+pub fn link(b: *Build, step: *CompileStep) *Module {
     const module = b.createModule(.{
         .source_file = .{ .path = thisPath("/src/main.zig") },
         .dependencies = &.{
@@ -51,6 +56,10 @@ pub fn link(b: *std.Build, step: *CompileStep) *Module {
             .{
                 .name = "clowder_math",
                 .module = clw_math.link(b, step),
+            },
+            .{
+                .name = "clowder_render",
+                .module = clw_render.link(b, step),
             },
             .{
                 .name = "clowder_window",

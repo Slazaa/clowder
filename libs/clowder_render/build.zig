@@ -1,5 +1,7 @@
 const std = @import("std");
 
+const clw_window = @import("../clowder_window/build.zig");
+
 const CompileStep = std.Build.Step.Compile;
 const Module = std.Build.Module;
 
@@ -14,40 +16,35 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     const lib = b.addStaticLibrary(.{
-        .name = "clowder_math",
+        .name = "clowder_render",
         .root_source_file = .{ .path = "src/main.zig" },
         .target = target,
         .optimize = optimize,
     });
-
-    link(b, lib);
 
     b.installArtifact(lib);
-
-    const main_tests = b.addTest(.{
-        .root_source_file = .{ .path = "src/main.zig" },
-        .target = target,
-        .optimize = optimize,
-    });
-
-    const run_main_tests = b.addRunArtifact(main_tests);
-
-    const test_step = b.step("test", "Run library tests");
-    test_step.dependOn(&run_main_tests.step);
 }
 
 pub fn link(b: *std.Build, step: *CompileStep) *Module {
+    step.linkLibC();
+
     if (module) |m| {
         return m;
     }
 
     module = b.createModule(.{
         .source_file = .{ .path = thisPath("/src/main.zig") },
+        .dependencies = &.{
+            .{
+                .name = "clowder_window",
+                .module = clw_window.link(b, step),
+            },
+        },
     });
 
     const module_ = module.?;
 
-    step.addModule("clowder_math", module_);
+    step.addModule("clowder_render", module_);
 
     return module_;
 }

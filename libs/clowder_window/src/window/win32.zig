@@ -6,8 +6,7 @@ const Event = window.Event;
 
 fn wndProc(h_wnd: c.HWND, msg: c.UINT, w_param: c.WPARAM, l_param: c.LPARAM) callconv(.C) c.LRESULT {
     switch (msg) {
-        c.WM_CLOSE => _ = c.DestroyWindow(h_wnd),
-        c.WM_DESTROY => c.PostQuitMessage(0),
+        c.WM_CLOSE => c.PostQuitMessage(0),
         else => return c.DefWindowProcA(h_wnd, msg, w_param, l_param),
     }
 
@@ -18,12 +17,17 @@ pub const WindowError = error{
     CouldNotGetHInstance,
     CouldNotRegisterClass,
     CouldNotCreateWindow,
+    CouldNotGetDeviceContext,
+    CouldNotFindPixelFormat,
+    CouldNotDescribePixelFormat,
+    CouldNotSetPixelFormat,
 };
 
 pub const WindowBase = struct {
     const Self = @This();
 
     handle: c.HWND,
+    device_context: c.HDC,
 
     pub fn init(title: [:0]const u8, x: i32, y: i32, width: u32, height: u32) WindowError!Self {
         const h_instance = c.GetModuleHandleA(null) orelse {
@@ -46,7 +50,7 @@ pub const WindowBase = struct {
             0,
             win_class_name,
             title,
-            c.WS_OVERLAPPEDWINDOW,
+            c.WS_OVERLAPPEDWINDOW | c.WS_CLIPSIBLINGS | c.WS_CLIPCHILDREN,
             x,
             y,
             @intCast(width),
@@ -59,15 +63,43 @@ pub const WindowBase = struct {
             return error.CouldNotCreateWindow;
         };
 
+        const device_context = c.GetDC(h_wnd) orelse {
+            return error.CouldNotGetDeviceContext;
+        };
+
+        var pixel_form_desc = c.PIXELFORMATDESCRIPTOR{
+            .nSize = @sizeOf(c.PIXELFORMATDESCRIPTOR),
+            .nVersion = 1,
+            .dwFlags = c.PFD_DRAW_TO_WINDOW | c.PFD_SUPPORT_OPENGL | c.PFD_DOUBLEBUFFER,
+            .iPixelType = c.PFD_TYPE_RGBA,
+            .cColorBits = 24,
+        };
+
+        const pixel_format = c.ChoosePixelFormat(device_context, &pixel_form_desc);
+
+        if (pixel_format == 0) {
+            return error.CouldNotFindPixelFormat;
+        }
+
+        if (c.DescribePixelFormat(device_context, pixel_format, @sizeOf(c.PIXELFORMATDESCRIPTOR), &pixel_form_desc) == 0) {
+            return error.CouldNotDescribePixelFormat;
+        }
+
+        if (c.SetPixelFormat(device_context, pixel_format, &pixel_form_desc) == c.FALSE) {
+            return error.CouldNotSetPixelFormat;
+        }
+
         _ = c.ShowWindow(h_wnd, c.SW_SHOW);
 
         return .{
             .handle = h_wnd,
+            .device_context = device_context,
         };
     }
 
     pub fn deinit(self: Self) void {
-        _ = self;
+        _ = c.ReleaseDC(self.handle, self.device_context);
+        _ = c.DestroyWindow(self.handle);
     }
 
     pub fn pollEvent(self: Self) ?Event {
@@ -75,7 +107,7 @@ pub const WindowBase = struct {
 
         var msg = c.MSG{};
 
-        if (c.PeekMessageA(&msg, null, 0, 0, c.PM_REMOVE) != 0) {
+        if (c.PeekMessageA(&msg, null, 0, 0, c.PM_REMOVE) == c.TRUE) {
             _ = c.TranslateMessage(&msg);
             _ = c.DispatchMessageA(&msg);
         }
