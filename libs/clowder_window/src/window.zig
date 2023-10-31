@@ -32,16 +32,11 @@ pub const WindowPos = union(enum) {
     at: Vec2i,
 };
 
-pub const RenderBackend = enum {
-    opengl,
-};
-
 pub const Event = union(enum) {
     close,
 };
 
 base: Base,
-render_backend: RenderBackend = .opengl,
 close_on_event: bool,
 open: bool = true,
 events: AutoArrayHashMap(Event, void),
@@ -53,7 +48,6 @@ pub fn init(
     title: [:0]const u8,
     position: WindowPos,
     size: Vec2u,
-    comptime render_backend: RenderBackend,
     close_on_event: bool,
 ) Error!Self {
     const position_vec = switch (position) {
@@ -62,8 +56,7 @@ pub fn init(
     };
 
     return .{
-        .base = try Base.init(title, position_vec[0], position_vec[1], size[0], size[1], render_backend),
-        .render_backend = render_backend,
+        .base = try Base.init(title, position_vec[0], position_vec[1], size[0], size[1]),
         .close_on_event = close_on_event,
         .events = AutoArrayHashMap(Event, void).init(allocator),
     };

@@ -17,11 +17,13 @@ pub fn main() !void {
         "Triangle",
         .center,
         .{ 800, 600 },
-        .opengl,
         true,
     );
 
     defer window.deinit();
+
+    const renderer = try clw.Renderer(.opengl).init(window);
+    defer renderer.deinit();
 
     while (window.open) {
         try window.update();
