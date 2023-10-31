@@ -41,7 +41,6 @@ pub const Base = struct {
             .style = c.CS_HREDRAW | c.CS_VREDRAW | c.CS_OWNDC,
             .lpfnWndProc = windowCallback,
             .hInstance = instance,
-            .hbrBackground = 0,
             .lpszClassName = "Clowder Window Class",
         };
 
@@ -67,6 +66,7 @@ pub const Base = struct {
         };
 
         _ = c.ShowWindow(window, c.SW_SHOW);
+        _ = c.UpdateWindow(window);
 
         const device_context = c.GetDC(window);
 
@@ -89,11 +89,13 @@ pub const Base = struct {
         if (c.PeekMessageA(&msg, null, 0, 0, c.PM_REMOVE) == c.TRUE) {
             _ = c.TranslateMessage(&msg);
             _ = c.DispatchMessageA(&msg);
+
+            return switch (msg.message) {
+                c.WM_QUIT => .close,
+                else => null,
+            };
         }
 
-        return switch (msg.message) {
-            c.WM_QUIT => .close,
-            else => null,
-        };
+        return null;
     }
 };

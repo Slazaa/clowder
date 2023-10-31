@@ -27,5 +27,9 @@ pub fn main() !void {
 
     while (window.open) {
         try window.update();
+
+        renderer.clear(clw.Color.blue);
+
+        renderer.display();
     }
 }

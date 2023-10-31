@@ -168,8 +168,14 @@ pub const Base = struct {
             0,
         };
 
-        const context = wglCreateContextAttribsARB(device_context, 0, &context_attribs);
+        const context = wglCreateContextAttribsARB(device_context, 0, &context_attribs) orelse {
+            return error.CouldNotCreateContext;
+        };
 
         return context;
+    }
+
+    pub fn display(window: Window) void {
+        _ = c.SwapBuffers(window.base.device_context);
     }
 };

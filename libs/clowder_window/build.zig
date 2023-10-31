@@ -1,4 +1,3 @@
-const builtin = @import("builtin");
 const std = @import("std");
 
 const clw_math = @import("../clowder_math/build.zig");
@@ -30,14 +29,6 @@ pub fn build(b: *std.Build) void {
 
 pub fn link(b: *std.Build, step: *CompileStep) *Module {
     step.linkLibC();
-
-    switch (builtin.os.tag) {
-        .windows => {
-            step.linkSystemLibrary("gdi32");
-            step.linkSystemLibrary("opengl32");
-        },
-        else => {},
-    }
 
     if (module) |m| {
         return m;

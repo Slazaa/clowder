@@ -42,7 +42,7 @@ open: bool = true,
 events: AutoArrayHashMap(Event, void),
 
 /// Intializes a new `Window`.
-/// Deinitiliaze it with `Window.deinit`.
+/// Deinitiliaze it with `deinit`.
 pub fn init(
     allocator: Allocator,
     title: [:0]const u8,
