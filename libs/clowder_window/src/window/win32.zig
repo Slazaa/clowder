@@ -1,10 +1,27 @@
 const c = @import("../c.zig");
 
-const window = @import("../window.zig");
+const Window = @import("../Window.zig");
 
-const Event = window.Event;
+const Event = Window.Event;
+const RenderBackend = Window.RenderBackend;
 
-fn wndProc(h_wnd: c.HWND, msg: c.UINT, w_param: c.WPARAM, l_param: c.LPARAM) callconv(.C) c.LRESULT {
+pub const Error = error{
+    CouldNotGetHInstance,
+    CouldNotRegisterClass,
+    CouldNotCreateWindow,
+    CouldNotGetDeviceContext,
+    CouldNotFindPixelFormat,
+    CouldNotSetPixelFormat,
+    CouldNotCreateContext,
+    CouldNotMakeContextCurrent,
+    CouldNotGetProcAddress,
+    CouldNotGetExtension,
+};
+
+var wglCreateContextAttribARB: *const fn (c.HDC, c.HGLRC, [*c]const c_int) callconv(.C) c.HGLRC = undefined;
+var wglChoosePixelFormatARB: *const fn (c.HDC, [*c]const c_int, [*c]const c.FLOAT, c.UINT, c_int, c.UINT) callconv(.C) c.BOOL = undefined;
+
+fn windowCallback(h_wnd: c.HWND, msg: c.UINT, w_param: c.WPARAM, l_param: c.LPARAM) callconv(.C) c.LRESULT {
     switch (msg) {
         c.WM_CLOSE => c.PostQuitMessage(0),
         else => return c.DefWindowProcA(h_wnd, msg, w_param, l_param),
@@ -13,66 +30,117 @@ fn wndProc(h_wnd: c.HWND, msg: c.UINT, w_param: c.WPARAM, l_param: c.LPARAM) cal
     return 0;
 }
 
-pub const WindowError = error{
-    CouldNotGetHInstance,
-    CouldNotRegisterClass,
-    CouldNotCreateWindow,
-    CouldNotGetDeviceContext,
-    CouldNotFindPixelFormat,
-    CouldNotDescribePixelFormat,
-    CouldNotSetPixelFormat,
-};
-
-pub const WindowBase = struct {
+pub const Base = struct {
     const Self = @This();
 
     handle: c.HWND,
-    device_context: c.HDC,
 
-    pub fn init(title: [:0]const u8, x: i32, y: i32, width: u32, height: u32) WindowError!Self {
-        const h_instance = c.GetModuleHandleA(null) orelse {
+    initContext: *const fn (self: Self) Error!c.HGLRC,
+
+    pub fn init(
+        title: [:0]const u8,
+        x: i32,
+        y: i32,
+        width: u32,
+        height: u32,
+        comptime render_backend: RenderBackend,
+    ) Error!Self {
+        const instance = c.GetModuleHandleA(null) orelse {
             return error.CouldNotGetHInstance;
         };
 
-        const win_class_name = "Clowder Window Class";
-
-        const win_class = c.WNDCLASS{
-            .lpfnWndProc = wndProc,
-            .hInstance = h_instance,
-            .lpszClassName = win_class_name,
+        const window_class = c.WNDCLASS{
+            .style = c.CS_HREDRAW | c.CS_VREDRAW | c.CS_OWNDC,
+            .lpfnWndProc = windowCallback,
+            .hInstance = instance,
+            .hCursor = c.LoadCursor(0, c.IDC_ARROW),
+            .hbrBackground = 0,
+            .lpszClassName = "Clowder Window Class",
         };
 
-        if (c.RegisterClassA(&win_class) == 0) {
+        if (c.RegisterClassA(&window_class) == 0) {
             return error.CouldNotRegisterClass;
         }
 
-        const h_wnd = c.CreateWindowExA(
+        const window = c.CreateWindowExA(
             0,
-            win_class_name,
+            window_class.lpszClassName,
             title,
-            c.WS_OVERLAPPEDWINDOW | c.WS_CLIPSIBLINGS | c.WS_CLIPCHILDREN,
+            c.WS_OVERLAPPEDWINDOW,
             x,
             y,
             @intCast(width),
             @intCast(height),
             null,
             null,
-            h_instance,
+            instance,
             null,
         ) orelse {
             return error.CouldNotCreateWindow;
         };
 
-        const device_context = c.GetDC(h_wnd) orelse {
+        _ = c.ShowWindow(window, c.SW_SHOW);
+
+        return .{
+            .handle = window,
+
+            .initContext = switch (render_backend) {
+                .opengl => initOpenglContext,
+            },
+        };
+    }
+
+    pub fn deinit(self: Self) void {
+        _ = c.DestroyWindow(self.handle);
+    }
+
+    fn initOpenglExtensions() Error!void {
+        const instance = c.GetModuleHandleA(null) orelse {
+            return error.CouldNotGetHInstance;
+        };
+
+        const window_class = c.WNDCLASS{
+            .style = c.CS_HREDRAW | c.CS_VREDRAW | c.CS_OWNDC,
+            .lpfnWndProc = c.DefWndProcA,
+            .hInstance = instance,
+            .lpszClassName = "Dummy Clowder Window Class",
+        };
+
+        if (c.RegisterClassA(&window_class) == 0) {
+            return error.CouldNotRegisterClass;
+        }
+
+        const window = c.CreateWindowExA(
+            0,
+            window_class.lpszClassName,
+            "Dummy Clowder Window",
+            0,
+            c.CW_USEDEFAULT,
+            c.CW_USEDEFAULT,
+            c.CW_USEDEFAULT,
+            c.CW_USEDEFAULT,
+            null,
+            null,
+            instance,
+            null,
+        ) orelse {
+            return error.CouldNotCreateWindow;
+        };
+
+        const device_context = c.GetDC(window) orelse {
             return error.CouldNotGetDeviceContext;
         };
 
         var pixel_form_desc = c.PIXELFORMATDESCRIPTOR{
             .nSize = @sizeOf(c.PIXELFORMATDESCRIPTOR),
             .nVersion = 1,
-            .dwFlags = c.PFD_DRAW_TO_WINDOW | c.PFD_SUPPORT_OPENGL | c.PFD_DOUBLEBUFFER,
             .iPixelType = c.PFD_TYPE_RGBA,
-            .cColorBits = 24,
+            .dwFlags = c.PFD_DRAW_TO_WINDOW | c.PFD_SUPPORT_OPENGL | c.PFD_DOUBLEBUFFER,
+            .cColorBits = 32,
+            .cAlphaBits = 8,
+            .iLayerType = c.PFD_MAIN_PLANE,
+            .cDepthBits = 24,
+            .cStencilBits = 8,
         };
 
         const pixel_format = c.ChoosePixelFormat(device_context, &pixel_form_desc);
@@ -81,25 +149,49 @@ pub const WindowBase = struct {
             return error.CouldNotFindPixelFormat;
         }
 
-        if (c.DescribePixelFormat(device_context, pixel_format, @sizeOf(c.PIXELFORMATDESCRIPTOR), &pixel_form_desc) == 0) {
-            return error.CouldNotDescribePixelFormat;
-        }
-
         if (c.SetPixelFormat(device_context, pixel_format, &pixel_form_desc) == c.FALSE) {
             return error.CouldNotSetPixelFormat;
         }
 
-        _ = c.ShowWindow(h_wnd, c.SW_SHOW);
-
-        return .{
-            .handle = h_wnd,
-            .device_context = device_context,
+        const context = c.wglCreateContext(device_context) orelse {
+            return error.CouldNotCreateContext;
         };
+
+        if (c.wglMakeCurrent(device_context, context) != 0) {
+            return error.CouldNotMakeContextCurrent;
+        }
+
+        wglCreateContextAttribARB = c.wglGetProcAddress("wglCreateContextAttribARB") orelse {
+            return error.CouldNotGetProcAddress;
+        };
+
+        wglChoosePixelFormatARB = c.wglGetProcAddress("wglChoosePixelFormatARB") orelse {
+            return error.CouldNotGetProcAddress;
+        };
+
+        c.wglMakeCurrent(device_context, null);
+        c.wglDeleteContext(context);
+        c.ReleaseDC(window, device_context);
+        c.DestroyWindow(window);
     }
 
-    pub fn deinit(self: Self) void {
-        _ = c.ReleaseDC(self.handle, self.device_context);
-        _ = c.DestroyWindow(self.handle);
+    fn initOpenglContext(self: Self) Error!c.HGLRC {
+        try initOpenglExtensions();
+
+        const context = c.wglCreateContext(self.device_context) orelse {
+            return error.CouldNotCreateContext;
+        };
+
+        if (c.wglMakeCurrent(self.device_context, context) != 0) {
+            return error.CouldNotMakeContextCurrent;
+        }
+
+        const wglGetExtensionsStringARB = c.wglGetProcAddress("wGetExtensionsStringARB") orelse {
+            return error.CouldNotGetProcAddress;
+        };
+        _ = wglGetExtensionsStringARB;
+
+        return context;
     }
 
     pub fn pollEvent(self: Self) ?Event {
