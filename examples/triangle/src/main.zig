@@ -1,13 +1,9 @@
 const std = @import("std");
 
-const heap = std.heap;
-
-const GeneralPurposeAllocator = heap.GeneralPurposeAllocator;
-
 const clw = @import("clowder");
 
 pub fn main() !void {
-    var gpa = GeneralPurposeAllocator(.{}){};
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
 
     const allocator = gpa.allocator();
@@ -22,14 +18,14 @@ pub fn main() !void {
 
     defer window.deinit();
 
-    const renderer = try clw.Renderer(.opengl).init(window);
-    defer renderer.deinit();
+    // const renderer = try clw.Renderer(.opengl).init(window);
+    // defer renderer.deinit();
 
     while (window.open) {
         try window.update();
 
-        renderer.clear(clw.Color.blue);
+        // renderer.clear(clw.Color.blue);
 
-        renderer.display();
+        // renderer.display();
     }
 }

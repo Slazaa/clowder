@@ -1,4 +1,4 @@
-const c = @import("../c.zig");
+const nat = @import("../native/win32.zig");
 
 const cwlmath = @import("clowder_math");
 
@@ -13,8 +13,8 @@ pub fn getSize(screen: Screen) Vec2u {
 
     switch (screen) {
         .primary => {
-            size[0] = @intCast(c.GetSystemMetrics(c.SM_CXSCREEN));
-            size[1] = @intCast(c.GetSystemMetrics(c.SM_CYSCREEN));
+            size[0] = @intCast(nat.GetSystemMetrics(nat.SM_CXSCREEN));
+            size[1] = @intCast(nat.GetSystemMetrics(nat.SM_CYSCREEN));
         },
     }
 

@@ -1,6 +1,8 @@
-const c = @import("../c.zig");
+const std = @import("std");
 
-const Window = @import("../Window.zig");
+const nat = @import("../native/win32.zig");
+
+const Window = @import("../window.zig");
 
 const Event = Window.Event;
 
@@ -11,10 +13,10 @@ pub const Error = error{
     CouldNotGetDeviceContext,
 };
 
-fn windowCallback(h_wnd: c.HWND, msg: c.UINT, w_param: c.WPARAM, l_param: c.LPARAM) callconv(.C) c.LRESULT {
+fn windowCallback(h_wnd: nat.HWND, msg: nat.UINT, w_param: nat.WPARAM, l_param: nat.LPARAM) nat.LRESULT {
     switch (msg) {
-        c.WM_CLOSE => c.PostQuitMessage(0),
-        else => return c.DefWindowProcA(h_wnd, msg, w_param, l_param),
+        nat.WM_CLOSE => nat.PostQuitMessage(0),
+        else => return nat.DefWindowProcA(h_wnd, msg, w_param, l_param),
     }
 
     return 0;
@@ -23,8 +25,8 @@ fn windowCallback(h_wnd: c.HWND, msg: c.UINT, w_param: c.WPARAM, l_param: c.LPAR
 pub const Base = struct {
     const Self = @This();
 
-    handle: c.HWND,
-    device_context: c.HDC,
+    handle: nat.HWND,
+    device_context: nat.HDC,
 
     pub fn init(
         title: [:0]const u8,
@@ -33,26 +35,26 @@ pub const Base = struct {
         width: u32,
         height: u32,
     ) Error!Self {
-        const instance = c.GetModuleHandleA(null) orelse {
+        const instance = nat.GetModuleHandleA(null) orelse {
             return error.CouldNotGetInstance;
         };
 
-        const window_class = c.WNDCLASS{
-            .style = c.CS_HREDRAW | c.CS_VREDRAW | c.CS_OWNDC,
+        const window_class = std.mem.zeroInit(nat.WNDCLASSA, .{
+            .style = nat.CS_HREDRAW | nat.CS_VREDRAW | nat.CS_OWNDC,
             .lpfnWndProc = windowCallback,
             .hInstance = instance,
             .lpszClassName = "Clowder Window Class",
-        };
+        });
 
-        if (c.RegisterClassA(&window_class) == 0) {
+        if (nat.RegisterClassA(&window_class) == 0) {
             return error.CouldNotRegisterClass;
         }
 
-        const window = c.CreateWindowExA(
+        const window = nat.CreateWindowExA(
             0,
             window_class.lpszClassName,
             title,
-            c.WS_OVERLAPPEDWINDOW,
+            nat.WS_OVERLAPPEDWINDOW,
             x,
             y,
             @intCast(width),
@@ -65,10 +67,10 @@ pub const Base = struct {
             return error.CouldNotCreateWindow;
         };
 
-        _ = c.ShowWindow(window, c.SW_SHOW);
-        _ = c.UpdateWindow(window);
+        _ = nat.ShowWindow(window, nat.SW_SHOW);
+        _ = nat.UpdateWindow(window);
 
-        const device_context = c.GetDC(window);
+        const device_context = nat.GetDC(window);
 
         return .{
             .handle = window,
@@ -77,21 +79,21 @@ pub const Base = struct {
     }
 
     pub fn deinit(self: Self) void {
-        _ = c.ReleaseDC(self.handle, self.device_context);
-        _ = c.DestroyWindow(self.handle);
+        _ = nat.ReleaseDC(self.handle, self.device_context);
+        _ = nat.DestroyWindow(self.handle);
     }
 
     pub fn pollEvent(self: Self) ?Event {
         _ = self;
 
-        var msg = c.MSG{};
+        var msg = std.mem.zeroInit(nat.MSG, .{});
 
-        if (c.PeekMessageA(&msg, null, 0, 0, c.PM_REMOVE) == c.TRUE) {
-            _ = c.TranslateMessage(&msg);
-            _ = c.DispatchMessageA(&msg);
+        if (nat.PeekMessageA(&msg, null, 0, 0, nat.PM_REMOVE) == nat.TRUE) {
+            _ = nat.TranslateMessage(&msg);
+            _ = nat.DispatchMessageA(&msg);
 
             return switch (msg.message) {
-                c.WM_QUIT => .close,
+                nat.WM_QUIT => .close,
                 else => null,
             };
         }

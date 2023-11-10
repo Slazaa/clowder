@@ -6,9 +6,12 @@ const Window = clw_window.Window;
 
 const Color = @import("Color.zig");
 
-const win32_opengl = @import("renderer/opengl/win32.zig");
+const backend_base = switch (builtin.os.tag) {
+    .windows => @import("base/opengl/win32.zig"),
+    else => @compileError("OS not supported"),
+};
 
-pub const Error = win32_opengl.Error;
+pub const Error = backend_base.Error;
 
 pub const Backend = enum {
     opengl,
@@ -27,13 +30,13 @@ pub fn Renderer(comptime backend: Backend) type {
 
         const BackendBase = switch (backend) {
             .opengl => switch (builtin.os.tag) {
-                .windows => win32_opengl.Base,
+                .windows => backend_base.Base,
                 else => @compileError("OS not supported"),
             },
         };
 
         const Base = switch (backend) {
-            .opengl => @import("renderer/opengl.zig").Base,
+            .opengl => @import("base/opengl.zig").Base,
         };
 
         window: Window,
