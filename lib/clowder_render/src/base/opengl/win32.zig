@@ -1,3 +1,5 @@
+const std = @import("std");
+
 const cwl_window = @import("clowder_window");
 
 const win_nat = cwl_window.native;
@@ -10,6 +12,7 @@ const nat = @import("../../native/opengl.zig");
 pub const Error = WindowError || error{
     CouldNotChoosePixelFormat,
     CouldNotFindPixelFormat,
+    CouldNotDescribePixelFormat,
     CouldNotSetPixelFormat,
     CouldNotGetProcAddres,
     CouldNotCreateContext,
@@ -35,12 +38,12 @@ pub const Base = struct {
             return error.CouldNotGetInstance;
         };
 
-        const window_class = win_nat.WNDCLASSA{
+        const window_class = std.mem.zeroInit(win_nat.WNDCLASSA, .{
             .style = win_nat.CS_HREDRAW | win_nat.CS_VREDRAW | win_nat.CS_OWNDC,
             .lpfnWndProc = win_nat.DefWindowProcA,
             .hInstance = instance,
             .lpszClassName = "Dummy Clowder Window Class",
-        };
+        });
 
         if (win_nat.RegisterClassA(&window_class) == 0) {
             return error.CouldNotRegisterClass;
@@ -63,11 +66,11 @@ pub const Base = struct {
             return error.CouldNotCreateWindow;
         };
 
-        const device_context = nat.GetDC(window) orelse {
+        const device_context = win_nat.GetDC(window) orelse {
             return error.CouldNotGetDeviceContext;
         };
 
-        var pixel_form_desc = win_nat.PIXELFORMATDESCRIPTOR{
+        var pixel_form_desc = std.mem.zeroInit(win_nat.PIXELFORMATDESCRIPTOR, .{
             .nSize = @sizeOf(win_nat.PIXELFORMATDESCRIPTOR),
             .nVersion = 1,
             .iPixelType = win_nat.PFD_TYPE_RGBA,
@@ -76,7 +79,7 @@ pub const Base = struct {
             .cAlphaBits = 8,
             .cDepthBits = 24,
             .cStencilBits = 8,
-        };
+        });
 
         const pixel_format = win_nat.ChoosePixelFormat(device_context, &pixel_form_desc);
 
@@ -128,17 +131,17 @@ pub const Base = struct {
         var pixel_format: c_int = undefined;
         var num_formats: win_nat.UINT = undefined;
 
-        _ = wglChoosePixelFormatARB(device_context, &pixel_format_attribs, null, 1, &pixel_format, &num_formats);
-
-        if (num_formats == 0) {
+        if (wglChoosePixelFormatARB(device_context, &pixel_format_attribs, null, 1, &pixel_format, &num_formats) == win_nat.FALSE) {
             return error.CouldNotChoosePixelFormat;
         }
 
         var pixel_format_desc: win_nat.PIXELFORMATDESCRIPTOR = undefined;
 
-        _ = win_nat.DescribePixelFormat(device_context, pixel_format, @sizeOf(win_nat.PIXELFORMATDESCRIPTOR), &pixel_format_desc);
+        if (win_nat.DescribePixelFormat(device_context, pixel_format, @sizeOf(win_nat.PIXELFORMATDESCRIPTOR), &pixel_format_desc) == 0) {
+            return error.CouldNotDescribePixelFormat;
+        }
 
-        if (win_nat.SetPixelFormat(device_context, pixel_format, &pixel_format_desc) == 0) {
+        if (win_nat.SetPixelFormat(device_context, pixel_format, &pixel_format_desc) == win_nat.FALSE) {
             return error.CouldNotSetPixelFormat;
         }
 
@@ -149,7 +152,7 @@ pub const Base = struct {
             0,
         };
 
-        const context = wglCreateContextAttribsARB(device_context, 0, &context_attribs) orelse {
+        const context = wglCreateContextAttribsARB(device_context, null, &context_attribs) orelse {
             return error.CouldNotCreateContext;
         };
 

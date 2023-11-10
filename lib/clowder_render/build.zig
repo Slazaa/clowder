@@ -32,10 +32,11 @@ pub fn link(b: *std.Build, step: *CompileStep) *Module {
     switch (builtin.os.tag) {
         .windows => {
             step.linkSystemLibrary("gdi32");
-            step.linkSystemLibrary("opengl32");
         },
         else => {},
     }
+
+    step.linkSystemLibrary("opengl32");
 
     if (module) |m| {
         return m;

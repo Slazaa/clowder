@@ -13,7 +13,7 @@ pub const Error = error{
     CouldNotGetDeviceContext,
 };
 
-fn windowCallback(h_wnd: nat.HWND, msg: nat.UINT, w_param: nat.WPARAM, l_param: nat.LPARAM) nat.LRESULT {
+fn windowCallback(h_wnd: nat.HWND, msg: nat.UINT, w_param: nat.WPARAM, l_param: nat.LPARAM) callconv(.C) nat.LRESULT {
     switch (msg) {
         nat.WM_CLOSE => nat.PostQuitMessage(0),
         else => return nat.DefWindowProcA(h_wnd, msg, w_param, l_param),
@@ -43,6 +43,7 @@ pub const Base = struct {
             .style = nat.CS_HREDRAW | nat.CS_VREDRAW | nat.CS_OWNDC,
             .lpfnWndProc = windowCallback,
             .hInstance = instance,
+            .hCursor = nat.LoadCursorA(null, nat.IDC_ARROW),
             .lpszClassName = "Clowder Window Class",
         });
 

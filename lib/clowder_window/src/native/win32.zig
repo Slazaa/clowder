@@ -1,11 +1,19 @@
 const builtin = @import("builtin");
 
+pub fn MAKEINTRESOURCEA(i: anytype) LPSTR {
+    return @ptrFromInt(i);
+}
+
 pub const FALSE = 0;
 pub const TRUE = 1;
 
 pub const CS_HREDRAW = 0x0002;
 pub const CS_OWNDC = 0x0020;
 pub const CS_VREDRAW = 0x0001;
+
+pub const CW_USEDEFAULT = -0x8000_0000;
+
+pub const IDC_ARROW = MAKEINTRESOURCEA(32512);
 
 pub const PFD_DOUBLEBUFFER = 0x0000_0001;
 pub const PFD_DRAW_TO_WINDOW = 0x0000_0004;
@@ -48,6 +56,7 @@ pub const ATOM = WORD;
 pub const BOOL = c_int;
 pub const BYTE = u8;
 pub const DWORD = c_ulong;
+pub const FLOAT = f32;
 pub const HANDLE = PVOID;
 pub const HBRUSH = HANDLE;
 pub const HCURSOR = HICON;
@@ -73,9 +82,10 @@ pub const LONG_PTR = switch (builtin.cpu.arch) {
 
 pub const LPARAM = LONG_PTR;
 pub const LPCSTR = ?[*:0]const u8;
+pub const LPSTR = ?[*:0]u8;
 pub const LPVOID = ?*anyopaque;
 pub const LRESULT = LONG_PTR;
-pub const PROC = ?*const fn (...) INT_PTR;
+pub const PROC = ?*const fn (...) callconv(.C) INT_PTR;
 pub const PVOID = ?*anyopaque;
 pub const UINT = c_uint;
 
@@ -84,7 +94,7 @@ pub const UINT_PTR = switch (builtin.cpu.arch) {
     else => c_uint,
 };
 
-pub const WNDPROC = ?*const fn (HWND, UINT, WPARAM, LPARAM) LRESULT;
+pub const WNDPROC = ?*const fn (HWND, UINT, WPARAM, LPARAM) callconv(.C) LRESULT;
 pub const WORD = c_ushort;
 pub const WPARAM = UINT_PTR;
 
@@ -175,6 +185,7 @@ pub extern fn DispatchMessageA(lpMsg: ?*const MSG) LRESULT;
 pub extern fn GetDC(hWnd: HWND) HDC;
 pub extern fn GetModuleHandleA(lpModuleName: LPCSTR) HMODULE;
 pub extern fn GetSystemMetrics(nIndex: c_int) c_int;
+pub extern fn LoadCursorA(hInstance: HINSTANCE, lpCursorName: LPCSTR) HCURSOR;
 pub extern fn PeekMessageA(lpMsg: LPMSG, hWnd: HWND, wMsgFilterMin: UINT, wMsgFilterMax: UINT, wRemoveMsg: UINT) BOOL;
 pub extern fn PostQuitMessage(nExitCode: c_int) void;
 pub extern fn RegisterClassA(lpWndClass: ?*const WNDCLASSA) ATOM;
