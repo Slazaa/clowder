@@ -120,18 +120,14 @@ pub const Base = struct {
             win_nat.WGL_DRAW_TO_WINDOW_ARB, nat.GL_TRUE,
             win_nat.WGL_SUPPORT_OPENGL_ARB, nat.GL_TRUE,
             win_nat.WGL_DOUBLE_BUFFER_ARB,  nat.GL_TRUE,
-            win_nat.WGL_ACCELERATION_ARB,   win_nat.WGL_FULL_ACCELERATION_ARB,
             win_nat.WGL_PIXEL_TYPE_ARB,     win_nat.WGL_TYPE_RGBA_ARB,
-            win_nat.WGL_COLOR_BITS_ARB,     32,
-            win_nat.WGL_DEPTH_BITS_ARB,     24,
-            win_nat.WGL_STENCIL_BITS_ARB,   8,
             0,
         };
 
         var pixel_format: c_int = undefined;
         var num_formats: win_nat.UINT = undefined;
 
-        if (wglChoosePixelFormatARB(device_context, &pixel_format_attribs, null, 1, &pixel_format, &num_formats) == win_nat.FALSE) {
+        if (wglChoosePixelFormatARB(device_context, &pixel_format_attribs, null, 512, &pixel_format, &num_formats) == win_nat.FALSE) {
             return error.CouldNotChoosePixelFormat;
         }
 

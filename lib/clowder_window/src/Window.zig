@@ -12,12 +12,8 @@ const cwl_math = @import("clowder_math");
 const Vec2u = cwl_math.Vec2u;
 const Vec2i = cwl_math.Vec2i;
 
+const base = @import("base.zig");
 const screen = @import("screen.zig");
-
-const base = switch (builtin.os.tag) {
-    .windows => @import("base/win32.zig"),
-    else => @compileError("OS not supported"),
-};
 
 const Base = base.Base;
 

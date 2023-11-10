@@ -38,6 +38,7 @@ pub const WGL_DOUBLE_BUFFER_ARB = 0x2011;
 pub const WGL_DRAW_TO_WINDOW_ARB = 0x2001;
 pub const WGL_FULL_ACCELERATION_ARB = 0x2027;
 pub const WGL_PIXEL_TYPE_ARB = 0x2013;
+pub const WGL_RED_BITS_ARB = 0x2015;
 pub const WGL_STENCIL_BITS_ARB = 0x2023;
 pub const WGL_SUPPORT_OPENGL_ARB = 0x2010;
 pub const WGL_TYPE_RGBA_ARB = 0x202B;
@@ -183,6 +184,7 @@ pub extern fn DescribePixelFormat(hdc: HDC, iPixelFormat: c_int, nBytes: UINT, p
 pub extern fn DestroyWindow(hWnd: HWND) BOOL;
 pub extern fn DispatchMessageA(lpMsg: ?*const MSG) LRESULT;
 pub extern fn GetDC(hWnd: HWND) HDC;
+pub extern fn GetLastError() DWORD;
 pub extern fn GetModuleHandleA(lpModuleName: LPCSTR) HMODULE;
 pub extern fn GetSystemMetrics(nIndex: c_int) c_int;
 pub extern fn LoadCursorA(hInstance: HINSTANCE, lpCursorName: LPCSTR) HCURSOR;

@@ -18,14 +18,14 @@ pub fn main() !void {
 
     defer window.deinit();
 
-    // const renderer = try clw.Renderer(.opengl).init(window);
-    // defer renderer.deinit();
+    const renderer = try clw.Renderer(.opengl).init(window);
+    defer renderer.deinit();
 
     while (window.open) {
         try window.update();
 
-        // renderer.clear(clw.Color.blue);
+        renderer.clear(clw.Color.blue);
 
-        // renderer.display();
+        renderer.display();
     }
 }
