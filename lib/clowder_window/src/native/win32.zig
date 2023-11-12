@@ -157,7 +157,8 @@ pub const PPOINT = *struct_tagPOINT;
 pub const NPPOINT = *struct_tagPOINT;
 pub const LPPOINT = *struct_tagPOINT;
 
-pub const struct_tagWNDCLASSA = extern struct {
+pub const struct_tagWNDCLASSEXA = extern struct {
+    cbSize: UINT,
     style: UINT,
     lpfnWndProc: WNDPROC,
     cbClsExtra: c_int,
@@ -168,12 +169,13 @@ pub const struct_tagWNDCLASSA = extern struct {
     hbrBackground: HBRUSH,
     lpszMenuName: LPCSTR,
     lpszClassName: LPCSTR,
+    hIconSm: HICON,
 };
 
-pub const WNDCLASSA = struct_tagWNDCLASSA;
-pub const PWNDCLASSA = *struct_tagWNDCLASSA;
-pub const NPWNDCLASSA = *struct_tagWNDCLASSA;
-pub const LPWNDCLASSA = *struct_tagWNDCLASSA;
+pub const WNDCLASSEXA = struct_tagWNDCLASSEXA;
+pub const PWNDCLASSEXA = *struct_tagWNDCLASSEXA;
+pub const NPWNDCLASSEXA = *struct_tagWNDCLASSEXA;
+pub const LPWNDCLASSEXA = *struct_tagWNDCLASSEXA;
 
 pub const WM_CLOSE = 0x0010;
 
@@ -190,7 +192,7 @@ pub extern fn GetSystemMetrics(nIndex: c_int) c_int;
 pub extern fn LoadCursorA(hInstance: HINSTANCE, lpCursorName: LPCSTR) HCURSOR;
 pub extern fn PeekMessageA(lpMsg: LPMSG, hWnd: HWND, wMsgFilterMin: UINT, wMsgFilterMax: UINT, wRemoveMsg: UINT) BOOL;
 pub extern fn PostQuitMessage(nExitCode: c_int) void;
-pub extern fn RegisterClassA(lpWndClass: ?*const WNDCLASSA) ATOM;
+pub extern fn RegisterClassExA(lpWndClass: ?*const WNDCLASSEXA) ATOM;
 pub extern fn ReleaseDC(hWnd: HWND, hDC: HDC) c_int;
 pub extern fn SetPixelFormat(hdc: HDC, format: c_int, ppfd: ?*const PIXELFORMATDESCRIPTOR) BOOL;
 pub extern fn ShowWindow(hWnd: HWND, nCmdShow: c_int) BOOL;

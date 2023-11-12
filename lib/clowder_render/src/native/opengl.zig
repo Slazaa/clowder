@@ -12,6 +12,7 @@ pub const GLfloat = f32;
 
 pub const PFNWGLCHOOSEPIXELFORMATARBPROC = *const fn (hDC: win_nat.HDC, piAttribIList: ?[*c]const c_int, pfAttribFList: ?[*c]const win_nat.FLOAT, nMaxFormats: win_nat.UINT, piFormats: ?[*c]c_int, nNumFormats: ?[*c]win_nat.UINT) win_nat.BOOL;
 pub const PFNWGLCREATECONTEXTATTRIBSARBPROC = *const fn (hDC: win_nat.HDC, hShareContext: win_nat.HGLRC, attribList: [*c]const c_int) win_nat.HGLRC;
+pub const PFNWGLGETEXTENSIONSSTRINGARBPROC = *const fn (hDC: win_nat.HDC) [*:0]const u8;
 
 pub extern fn glClear(mask: GLbitfield) void;
 pub extern fn glClearColor(red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat) void;

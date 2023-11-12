@@ -39,15 +39,16 @@ pub const Base = struct {
             return error.CouldNotGetInstance;
         };
 
-        const window_class = std.mem.zeroInit(nat.WNDCLASSA, .{
-            .style = nat.CS_HREDRAW | nat.CS_VREDRAW | nat.CS_OWNDC,
+        const window_class = std.mem.zeroInit(nat.WNDCLASSEXA, .{
+            .cbSize = @sizeOf(nat.WNDCLASSEXA),
+            // .style = nat.CS_HREDRAW | nat.CS_VREDRAW | nat.CS_OWNDC,
             .lpfnWndProc = windowCallback,
             .hInstance = instance,
             .hCursor = nat.LoadCursorA(null, nat.IDC_ARROW),
             .lpszClassName = "Clowder Window Class",
         });
 
-        if (nat.RegisterClassA(&window_class) == 0) {
+        if (nat.RegisterClassExA(&window_class) == 0) {
             return error.CouldNotRegisterClass;
         }
 
@@ -68,10 +69,10 @@ pub const Base = struct {
             return error.CouldNotCreateWindow;
         };
 
+        const device_context = nat.GetDC(window);
+
         _ = nat.ShowWindow(window, nat.SW_SHOW);
         _ = nat.UpdateWindow(window);
-
-        const device_context = nat.GetDC(window);
 
         return .{
             .handle = window,
