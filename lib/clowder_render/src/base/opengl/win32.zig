@@ -102,32 +102,21 @@ pub const Base = struct {
             }
         };
 
-        var extensions_string = raw_extensions_string[0..raw_extensions_string_len];
+        const extensions_string = raw_extensions_string[0..raw_extensions_string_len];
 
-        var wglChoosePixelFormatARB_opt: ?nat.PFNWGLCHOOSEPIXELFORMATARBPROC = null;
-        var wglCreateContextAttribsARB_opt: ?nat.PFNWGLCREATECONTEXTATTRIBSARBPROC = null;
-
-        while (extensions_string.len != 0) {
-            if (std.mem.startsWith(u8, extensions_string, "WGL_ARB_pixel_format")) {
-                wglChoosePixelFormatARB_opt = @as(nat.PFNWGLCHOOSEPIXELFORMATARBPROC, @ptrCast(win_nat.wglGetProcAddress("wglChoosePixelFormatARB") orelse {
-                    return error.CouldNotGetProcAddress;
-                }));
-            } else if (std.mem.startsWith(u8, extensions_string, "WGL_ARB_create_context")) {
-                wglCreateContextAttribsARB_opt = @as(nat.PFNWGLCREATECONTEXTATTRIBSARBPROC, @ptrCast(win_nat.wglGetProcAddress("wglCreateContextAttribsARB") orelse {
-                    return error.CouldNotGetProcAddress;
-                }));
-            }
-
-            extensions_string.ptr += 1;
-            extensions_string.len -= 1;
-        }
-
-        if (wglChoosePixelFormatARB_opt == null or wglCreateContextAttribsARB_opt == null) {
+        if (!std.mem.containsAtLeast(u8, extensions_string, 1, "WGL_ARB_pixel_format") or
+            !std.mem.containsAtLeast(u8, extensions_string, 1, "WGL_ARB_create_context"))
+        {
             return error.CouldNotLoadExtensions;
         }
 
-        wglChoosePixelFormatARB = wglChoosePixelFormatARB_opt.?;
-        wglCreateContextAttribsARB = wglCreateContextAttribsARB_opt.?;
+        wglChoosePixelFormatARB = @as(nat.PFNWGLCHOOSEPIXELFORMATARBPROC, @ptrCast(win_nat.wglGetProcAddress("wglChoosePixelFormatARB") orelse {
+            return error.CouldNotGetProcAddress;
+        }));
+
+        wglCreateContextAttribsARB = @as(nat.PFNWGLCREATECONTEXTATTRIBSARBPROC, @ptrCast(win_nat.wglGetProcAddress("wglCreateContextAttribsARB") orelse {
+            return error.CouldNotGetProcAddress;
+        }));
 
         _ = win_nat.wglMakeCurrent(device_context, null);
         _ = win_nat.wglDeleteContext(context);
@@ -156,11 +145,10 @@ pub const Base = struct {
             return error.CouldNotChoosePixelFormat;
         }
 
-        var pixel_format_desc = std.mem.zeroInit(win_nat.PIXELFORMATDESCRIPTOR, .{
-            .nSize = @sizeOf(win_nat.PIXELFORMATDESCRIPTOR),
-        });
+        var pixel_format_desc: win_nat.PIXELFORMATDESCRIPTOR = undefined;
 
         if (win_nat.DescribePixelFormat(device_context, pixel_format, @sizeOf(win_nat.PIXELFORMATDESCRIPTOR), &pixel_format_desc) == 0) {
+            std.debug.print("{}\n", .{win_nat.GetLastError()});
             return error.CouldNotDescribePixelFormat;
         }
 
