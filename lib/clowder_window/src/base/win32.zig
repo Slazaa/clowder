@@ -41,7 +41,7 @@ pub const Base = struct {
 
         const window_class = std.mem.zeroInit(nat.WNDCLASSEXA, .{
             .cbSize = @sizeOf(nat.WNDCLASSEXA),
-            // .style = nat.CS_HREDRAW | nat.CS_VREDRAW | nat.CS_OWNDC,
+            .style = nat.CS_HREDRAW | nat.CS_VREDRAW | nat.CS_OWNDC,
             .lpfnWndProc = windowCallback,
             .hInstance = instance,
             .hCursor = nat.LoadCursorA(null, nat.IDC_ARROW),

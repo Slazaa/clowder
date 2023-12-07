@@ -14,7 +14,8 @@ pub const Error = WindowError || error{
     CouldNotDescribePixelFormat,
     CouldNotSetPixelFormat,
     CouldNotGetProcAddress,
-    CouldNotLoadExtensions,
+    CouldNotFindExtension,
+    CouldNotLoadExtension,
     CouldNotCreateContext,
     CouldNotMakeContextCurrent,
 };
@@ -107,15 +108,15 @@ pub const Base = struct {
         if (!std.mem.containsAtLeast(u8, extensions_string, 1, "WGL_ARB_pixel_format") or
             !std.mem.containsAtLeast(u8, extensions_string, 1, "WGL_ARB_create_context"))
         {
-            return error.CouldNotLoadExtensions;
+            return error.CouldNotFindExtension;
         }
 
         wglChoosePixelFormatARB = @as(nat.PFNWGLCHOOSEPIXELFORMATARBPROC, @ptrCast(win_nat.wglGetProcAddress("wglChoosePixelFormatARB") orelse {
-            return error.CouldNotGetProcAddress;
+            return error.CouldNotLoadExtension;
         }));
 
         wglCreateContextAttribsARB = @as(nat.PFNWGLCREATECONTEXTATTRIBSARBPROC, @ptrCast(win_nat.wglGetProcAddress("wglCreateContextAttribsARB") orelse {
-            return error.CouldNotGetProcAddress;
+            return error.CouldNotLoadExtension;
         }));
 
         _ = win_nat.wglMakeCurrent(device_context, null);
@@ -138,21 +139,20 @@ pub const Base = struct {
             0,
         };
 
-        var pixel_format: c_int = undefined;
+        var pixel_formats: [1]c_int = undefined;
         var num_formats: win_nat.UINT = undefined;
 
-        if (wglChoosePixelFormatARB(device_context, &pixel_format_attribs, null, 1, &pixel_format, &num_formats) == win_nat.FALSE or num_formats == 0) {
+        if (wglChoosePixelFormatARB(device_context, &pixel_format_attribs, null, 1, &pixel_formats, &num_formats) == win_nat.FALSE or num_formats == 0) {
             return error.CouldNotChoosePixelFormat;
         }
 
         var pixel_format_desc: win_nat.PIXELFORMATDESCRIPTOR = undefined;
 
-        if (win_nat.DescribePixelFormat(device_context, pixel_format, @sizeOf(win_nat.PIXELFORMATDESCRIPTOR), &pixel_format_desc) == 0) {
-            std.debug.print("{}\n", .{win_nat.GetLastError()});
+        if (win_nat.DescribePixelFormat(device_context, pixel_formats[0], @sizeOf(win_nat.PIXELFORMATDESCRIPTOR), &pixel_format_desc) == 0) {
             return error.CouldNotDescribePixelFormat;
         }
 
-        if (win_nat.SetPixelFormat(device_context, pixel_format, &pixel_format_desc) == win_nat.FALSE) {
+        if (win_nat.SetPixelFormat(device_context, pixel_formats[0], &pixel_format_desc) == win_nat.FALSE) {
             return error.CouldNotSetPixelFormat;
         }
 
