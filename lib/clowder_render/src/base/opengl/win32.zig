@@ -29,12 +29,6 @@ pub const Base = struct {
 
     context: win_nat.HGLRC,
 
-    pub fn init(window: Window) Error!Self {
-        return .{
-            .context = try initContenxt(window.base.device_context),
-        };
-    }
-
     fn initExtensions() Error!void {
         const window = win_nat.CreateWindowExA(
             0,
@@ -174,7 +168,15 @@ pub const Base = struct {
         return context;
     }
 
-    pub fn display(window: Window) void {
+    pub fn init(window: Window) Error!Self {
+        return .{
+            .context = try initContenxt(window.base.device_context),
+        };
+    }
+
+    pub fn deinit(_: Self) void {}
+
+    pub fn swap(window: Window) void {
         _ = win_nat.SwapBuffers(window.base.device_context);
     }
 };

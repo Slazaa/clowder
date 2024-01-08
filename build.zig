@@ -3,7 +3,7 @@ const std = @import("std");
 const clw_ecs = @import("lib/clowder_ecs/build.zig");
 const clw_math = @import("lib/clowder_math/build.zig");
 const clw_render = @import("lib/clowder_render/build.zig");
-const clw_video = @import("lib/clowder_video/build.zig");
+const clw_window = @import("lib/clowder_window/build.zig");
 
 const triangle = @import("examples/triangle/build.zig");
 
@@ -70,7 +70,7 @@ pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
             },
             .{
                 .name = "clowder_window",
-                .module = clw_video.link(b, step),
+                .module = clw_window.link(b, step),
             },
         },
     });

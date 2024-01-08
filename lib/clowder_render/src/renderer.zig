@@ -21,6 +21,8 @@ pub const Context = struct {
     display: *const fn () void,
 };
 
+/// Represents a renderer.
+/// The renderer renders stuff on a `Window`.
 pub fn Renderer(comptime config: Config) type {
     return struct {
         const Self = @This();
@@ -36,6 +38,8 @@ pub fn Renderer(comptime config: Config) type {
         window: Window,
         backend_base: BackendBase,
 
+        /// Initializes a new `Renderer`.
+        /// Deinitialize it with `deinit`.
         pub fn init(window: Window) Error!Self {
             return .{
                 .window = window,
@@ -43,8 +47,12 @@ pub fn Renderer(comptime config: Config) type {
             };
         }
 
-        pub fn deinit(_: Self) void {}
+        /// Deinitiliazes the `Renderer`.
+        pub fn deinit(self: Self) void {
+            self.backend_base.deinit();
+        }
 
+        /// Returns a `Context` of the `Renderer`.
         pub fn context(self: *Self) Context {
             return .{
                 .renderer = self,
@@ -54,12 +62,14 @@ pub fn Renderer(comptime config: Config) type {
             };
         }
 
+        /// Clears the `Renderer` with `color`.
         pub fn clear(_: Self, color: Color) void {
             Base.clear(color);
         }
 
-        pub fn display(self: Self) void {
-            BackendBase.display(self.window);
+        /// Swaps the buffers.
+        pub fn swap(self: Self) void {
+            BackendBase.swap(self.window);
         }
     };
 }

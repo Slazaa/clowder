@@ -26,6 +26,6 @@ pub fn main() !void {
 
         renderer.clear(clw.Color.blue);
 
-        renderer.display();
+        renderer.swap();
     }
 }

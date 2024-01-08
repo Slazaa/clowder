@@ -1,7 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-const clw_video = @import("../clowder_video/build.zig");
+const clw_window = @import("../clowder_window/build.zig");
 
 var module: ?*std.Build.Module = null;
 
@@ -42,7 +42,7 @@ pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
         .dependencies = &.{
             .{
                 .name = "clowder_window",
-                .module = clw_video.link(b, step),
+                .module = clw_window.link(b, step),
             },
         },
     });
