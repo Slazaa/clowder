@@ -28,6 +28,7 @@ pub const Event = union(enum) {
     close,
 };
 
+/// Represents a window.
 pub const Window = struct {
     const Self = @This();
 

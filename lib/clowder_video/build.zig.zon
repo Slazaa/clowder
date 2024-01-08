@@ -1,5 +1,5 @@
 .{
-    .name = "clowder_window",
+    .name = "clowder_video",
     .version = "1.0.0",
     .paths = .{
         "src/",

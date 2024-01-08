@@ -8,6 +8,7 @@ const screen_ = @import("../screen.zig");
 
 const Screen = screen_.Screen;
 
+/// Returns the size of the `screen`.
 pub fn getSize(screen: Screen) Vec2u {
     var size: Vec2u = undefined;
 

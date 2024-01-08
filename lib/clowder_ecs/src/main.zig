@@ -2,8 +2,7 @@ const std = @import("std");
 
 const testing = std.testing;
 
-pub const Entity = @import("Entity.zig");
-pub const Registry = @import("World.zig");
+pub const Registry = @import("Registry.zig");
 
 const Component = struct {
     value: u32,

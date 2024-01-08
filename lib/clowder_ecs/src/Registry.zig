@@ -1,13 +1,6 @@
 const std = @import("std");
 
-const mem = std.mem;
-
-const Allocator = mem.Allocator;
-
-const StringArrayHashMap = std.StringArrayHashMap;
-
 const ComponentStorage = @import("component_storage.zig").ComponentStorage;
-const Entity = @import("Entity.zig");
 
 const Self = @This();
 
@@ -17,14 +10,16 @@ pub const Error = error{
     ComponentAlreadyRegistered,
 };
 
-allocator: Allocator,
-component_storages: StringArrayHashMap(ComponentStorageAddress),
+pub const Entity = u32;
+
+allocator: std.mem.Allocator,
+component_storages: std.StringArrayHashMap(ComponentStorageAddress),
 next_entity_id: u32 = 0,
 
-pub fn init(allocator: Allocator) Self {
+pub fn init(allocator: std.mem.Allocator) Self {
     return .{
         .allocator = allocator,
-        .component_storages = StringArrayHashMap(ComponentStorageAddress).init(allocator),
+        .component_storages = std.StringArrayHashMap(ComponentStorageAddress).init(allocator),
     };
 }
 
@@ -53,7 +48,7 @@ pub fn isRegistered(self: *Self, comptime T: type) bool {
     return self.component_storages.contains(component_id);
 }
 
-pub fn register(self: *Self, comptime T: type) !void {
+fn register(self: *Self, comptime T: type) !void {
     if (self.isRegistered(T)) {
         return error.ComponentAlreadyRegistered;
     }
@@ -64,22 +59,4 @@ pub fn register(self: *Self, comptime T: type) !void {
     component_storage_ptr.* = ComponentStorage(T).init(self.allocator);
 
     try self.component_storages.put(component_id, @intFromPtr(component_storage_ptr));
-}
-
-pub fn getComponentStorage(self: *Self, comptime T: type) *ComponentStorage(T) {
-    if (!self.isRegistered(T)) {
-        @panic("Component '" ++ @typeName(T) ++ "' not registered");
-    }
-
-    const component_id = @typeName(T);
-
-    return @as(*ComponentStorage(T), @ptrFromInt(self.component_storages.get(component_id) orelse unreachable));
-}
-
-pub fn getComponentStorageOrRegister(self: *Self, comptime T: type) !*ComponentStorage(T) {
-    if (!self.isRegistered(T)) {
-        try self.register(T);
-    }
-
-    return self.getComponentStorage(T);
 }

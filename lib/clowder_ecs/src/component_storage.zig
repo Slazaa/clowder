@@ -1,10 +1,9 @@
 const std = @import("std");
 
-const AutoArrayHashMap = std.AutoArrayHashMap;
+const main = @import("main.zig");
 
-const Entity = @import("Entity.zig");
-const EntityID = Entity.EntityID;
+const Entity = main.Entity;
 
 pub fn ComponentStorage(comptime T: type) type {
-    return AutoArrayHashMap(EntityID, T);
+    return std.AutoArrayHashMap(Entity, T);
 }

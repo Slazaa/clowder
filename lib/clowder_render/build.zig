@@ -1,7 +1,7 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-const clw_window = @import("../clowder_window/build.zig");
+const clw_video = @import("../clowder_video/build.zig");
 
 var module: ?*std.Build.Module = null;
 
@@ -27,9 +27,7 @@ pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
     step.linkLibC();
 
     switch (builtin.os.tag) {
-        .windows => {
-            step.linkSystemLibrary("gdi32");
-        },
+        .windows => step.linkSystemLibrary("gdi32"),
         else => {},
     }
 
@@ -44,7 +42,7 @@ pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
         .dependencies = &.{
             .{
                 .name = "clowder_window",
-                .module = clw_window.link(b, step),
+                .module = clw_video.link(b, step),
             },
         },
     });
