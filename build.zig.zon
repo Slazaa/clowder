@@ -1,5 +1,15 @@
 .{
     .name = "clowder",
     .version = "1.0.0",
-    .paths = .{""},
+    .paths = .{
+        "src/",
+        "build.zig",
+        "build.zig.zon",
+    },
+    .dependencies = .{
+        .sdl = .{
+            .url = "https://github.com/Slazaa/zig-sdl/archive/8453c8d11a55e17c2f7f8ae1aba18c7b69f3915b.tar.gz",
+            .hash = "12202af782411ddc5687b3ff07730e3644654f4364a92fa92615035f8e5df0c3019a",
+        },
+    },
 }

@@ -85,9 +85,7 @@ pub const Base = struct {
         _ = nat.DestroyWindow(self.handle);
     }
 
-    pub fn pollEvent(self: Self) ?Event {
-        _ = self;
-
+    pub fn pollEvent(_: Self) ?Event {
         var msg = std.mem.zeroInit(nat.MSG, .{});
 
         if (nat.PeekMessageA(&msg, null, 0, 0, nat.PM_REMOVE) == nat.TRUE) {

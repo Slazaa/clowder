@@ -1,0 +1,9 @@
+.{
+    .name = "clowder_render",
+    .version = "rolling",
+    .paths = .{
+        "src/",
+        "build.zig",
+        "build.zig.zon",
+    },
+}

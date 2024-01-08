@@ -1,9 +1,5 @@
 const std = @import("std");
 
-const Build = std.Build;
-const CompileStep = Build.Step.Compile;
-const Module = Build.Module;
-
 const clw_ecs = @import("lib/clowder_ecs/build.zig");
 const clw_math = @import("lib/clowder_math/build.zig");
 const clw_render = @import("lib/clowder_render/build.zig");
@@ -15,7 +11,7 @@ fn thisPath(comptime suffix: []const u8) []const u8 {
     return comptime (std.fs.path.dirname(@src().file) orelse ".") ++ suffix;
 }
 
-fn install(b: *Build, step: *CompileStep, comptime name: []const u8) void {
+fn install(b: *std.Build, step: *std.Build.Step.Compile, comptime name: []const u8) void {
     const install_step = b.step(name, "Build '" ++ name ++ "' demo");
     install_step.dependOn(&b.addInstallArtifact(step, .{}).step);
 
@@ -27,7 +23,7 @@ fn install(b: *Build, step: *CompileStep, comptime name: []const u8) void {
     b.getInstallStep().dependOn(install_step);
 }
 
-pub fn build(b: *Build) void {
+pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
@@ -38,6 +34,26 @@ pub fn build(b: *Build) void {
         .optimize = optimize,
     });
 
+    const sdl_dep = b.dependency("sdl2", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
+    const module = b.addModule("sdl2", .{
+        .source_file = .{ .path = "src/main.zig" },
+        .dependencies = &.{
+            .{ .name = "sdl2", .module = sdl_dep.module("sdl2") },
+        },
+    });
+
+    var dep_iter = module.dependencies.iterator();
+
+    while (dep_iter.next()) |e| {
+        lib.addModule(e.key_ptr.*, e.value_ptr.*);
+    }
+
+    @import("sdl2").link(b, lib, .static);
+
     _ = link(b, lib);
 
     b.installArtifact(lib);
@@ -45,7 +61,7 @@ pub fn build(b: *Build) void {
     install(b, triangle.build(b, target, optimize), "triangle");
 }
 
-pub fn link(b: *Build, step: *CompileStep) *Module {
+pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
     const module = b.createModule(.{
         .source_file = .{ .path = thisPath("/src/main.zig") },
         .dependencies = &.{

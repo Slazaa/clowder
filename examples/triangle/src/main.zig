@@ -8,6 +8,9 @@ pub fn main() !void {
 
     const allocator = gpa.allocator();
 
+    try clw.init();
+    defer clw.deinit();
+
     var window = try clw.Window.init(
         allocator,
         "Triangle",

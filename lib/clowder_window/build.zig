@@ -2,10 +2,7 @@ const std = @import("std");
 
 const clw_math = @import("../clowder_math/build.zig");
 
-const CompileStep = std.Build.Step.Compile;
-const Module = std.Build.Module;
-
-var module: ?*Module = null;
+var module: ?*std.Build.Module = null;
 
 fn thisPath(comptime suffix: []const u8) []const u8 {
     return comptime (std.fs.path.dirname(@src().file) orelse ".") ++ suffix;
@@ -22,12 +19,20 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    link(b, lib);
+    const sdl = b.dependency("sdl2", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
+    sdl.link(b, lib, .static);
+    lib.addModule("sdl2", sdl.getModule(b));
+
+    _ = link(b, lib);
 
     b.installArtifact(lib);
 }
 
-pub fn link(b: *std.Build, step: *CompileStep) *Module {
+pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
     step.linkLibC();
 
     if (module) |m| {

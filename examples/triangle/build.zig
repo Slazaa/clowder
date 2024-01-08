@@ -1,20 +1,12 @@
 const std = @import("std");
 
-const builtin = std.builtin;
-const zig = std.zig;
-
-const Build = std.Build;
-const CompileStep = Build.CompileStep;
-const CrossTarget = zig.CrossTarget;
-const OptimizeMode = builtin.OptimizeMode;
-
 const clw = @import("../../build.zig");
 
 fn thisPath(comptime suffix: []const u8) []const u8 {
     return comptime (std.fs.path.dirname(@src().file) orelse ".") ++ suffix;
 }
 
-pub fn build(b: *Build, target: CrossTarget, optimize: OptimizeMode) *CompileStep {
+pub fn build(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) *std.Build.Step.Compile {
     const exe = b.addExecutable(.{
         .name = "triangle",
         .root_source_file = .{ .path = thisPath("/src/main.zig") },
