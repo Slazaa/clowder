@@ -15,7 +15,7 @@ fn install(b: *std.Build, step: *std.Build.Step.Compile, comptime name: []const 
     const install_step = b.step(name, "Build '" ++ name ++ "' demo");
     install_step.dependOn(&b.addInstallArtifact(step, .{}).step);
 
-    const run_step = b.step(name ++ "-example", "Run '" ++ name ++ "' demo");
+    const run_step = b.step("example-" ++ name, "Run '" ++ name ++ "' demo");
     const run_cmd = b.addRunArtifact(step);
     run_cmd.step.dependOn(install_step);
     run_step.dependOn(&run_cmd.step);
@@ -34,16 +34,9 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const sdl_dep = b.dependency("sdl2", .{
-        .target = target,
-        .optimize = optimize,
-    });
-
     const module = b.addModule("sdl2", .{
         .source_file = .{ .path = "src/main.zig" },
-        .dependencies = &.{
-            .{ .name = "sdl2", .module = sdl_dep.module("sdl2") },
-        },
+        .dependencies = &.{},
     });
 
     var dep_iter = module.dependencies.iterator();
@@ -51,8 +44,6 @@ pub fn build(b: *std.Build) void {
     while (dep_iter.next()) |e| {
         lib.addModule(e.key_ptr.*, e.value_ptr.*);
     }
-
-    @import("sdl2").link(b, lib, .static);
 
     _ = link(b, lib);
 

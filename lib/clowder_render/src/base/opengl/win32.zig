@@ -167,6 +167,10 @@ pub const Base = struct {
             return error.CouldNotCreateContext;
         };
 
+        if (win_nat.wglMakeCurrent(device_context, context) == win_nat.FALSE) {
+            return error.CouldNotMakeContextCurrent;
+        }
+
         return context;
     }
 

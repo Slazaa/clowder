@@ -8,9 +8,6 @@ pub fn main() !void {
 
     const allocator = gpa.allocator();
 
-    try clw.init();
-    defer clw.deinit();
-
     var window = try clw.Window.init(
         allocator,
         "Triangle",
@@ -23,11 +20,6 @@ pub fn main() !void {
 
     const renderer = try clw.Renderer(.{}).init(window);
     defer renderer.deinit();
-
-    std.debug.print("Vendor: {?s}\n", .{clw.render.native.opengl.glGetString(clw.render.native.opengl.GL_VENDOR)});
-    std.debug.print("Renderer: {?s}\n", .{clw.render.native.opengl.glGetString(clw.render.native.opengl.GL_RENDERER)});
-    std.debug.print("Version: {?s}\n", .{clw.render.native.opengl.glGetString(clw.render.native.opengl.GL_VERSION)});
-    std.debug.print("Shading language: {?s}\n", .{clw.render.native.opengl.glGetString(clw.render.native.opengl.GL_SHADING_LANGUAGE_VERSION)});
 
     while (window.open) {
         try window.update();

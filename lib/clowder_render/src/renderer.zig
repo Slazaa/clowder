@@ -6,10 +6,6 @@ const Window = clw_window.Window;
 
 const Color = @import("Color.zig");
 
-const backend_base = @import("base.zig");
-
-pub const Error = backend_base.Error;
-
 pub const Backend = enum {
     opengl,
 };
@@ -21,7 +17,7 @@ pub const Config = struct {
 pub const Context = struct {
     renderer: *Renderer,
 
-    clear: *const fn (Color) void,
+    clear: *const fn (color: Color) void,
     display: *const fn () void,
 };
 
@@ -29,12 +25,12 @@ pub fn Renderer(comptime config: Config) type {
     return struct {
         const Self = @This();
 
-        const BackendBase = switch (config.backend) {
-            .opengl => switch (builtin.os.tag) {
-                .windows => backend_base.Base,
-                else => @compileError("OS not supported"),
-            },
+        const backend_base = switch (config.backend) {
+            .opengl => @import("base/opengl.zig"),
         };
+
+        const Error = backend_base.Error;
+        const BackendBase = backend_base.BackendBase;
 
         const Base = switch (config.backend) {
             .opengl => @import("base/opengl.zig").Base,
@@ -63,8 +59,7 @@ pub fn Renderer(comptime config: Config) type {
             };
         }
 
-        pub fn clear(self: Self, color: Color) void {
-            _ = self;
+        pub fn clear(_: Self, color: Color) void {
             Base.clear(color);
         }
 

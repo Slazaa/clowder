@@ -19,14 +19,6 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const sdl = b.dependency("sdl2", .{
-        .target = target,
-        .optimize = optimize,
-    });
-
-    sdl.link(b, lib, .static);
-    lib.addModule("sdl2", sdl.getModule(b));
-
     _ = link(b, lib);
 
     b.installArtifact(lib);
