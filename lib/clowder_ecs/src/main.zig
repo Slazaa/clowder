@@ -3,7 +3,7 @@ const std = @import("std");
 const testing = std.testing;
 
 pub const Entity = @import("Entity.zig");
-pub const World = @import("World.zig");
+pub const Registry = @import("World.zig");
 
 const Component = struct {
     value: u32,
@@ -12,10 +12,10 @@ const Component = struct {
 const allocator = testing.allocator;
 
 test "component test" {
-    var world = World.init(allocator);
-    defer world.deinit();
+    var registry = Registry.init(allocator);
+    defer registry.deinit();
 
-    const entity = world.spawn();
+    const entity = registry.spawn();
     try entity.add(Component{ .value = 10 });
 
     const component = entity.get(Component);

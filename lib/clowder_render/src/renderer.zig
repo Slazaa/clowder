@@ -31,10 +31,7 @@ pub fn Renderer(comptime config: Config) type {
 
         const Error = backend_base.Error;
         const BackendBase = backend_base.BackendBase;
-
-        const Base = switch (config.backend) {
-            .opengl => @import("base/opengl.zig").Base,
-        };
+        const Base = backend_base.Base;
 
         window: Window,
         backend_base: BackendBase,
@@ -46,9 +43,7 @@ pub fn Renderer(comptime config: Config) type {
             };
         }
 
-        pub fn deinit(self: Self) void {
-            _ = self;
-        }
+        pub fn deinit(_: Self) void {}
 
         pub fn context(self: *Self) Context {
             return .{
