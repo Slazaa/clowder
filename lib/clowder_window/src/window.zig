@@ -1,85 +1,105 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-const mem = std.mem;
+const clw_math = @import("clowder_math");
 
-const AutoArrayHashMap = std.AutoArrayHashMap;
-
-const Allocator = mem.Allocator;
-
-const cwl_math = @import("clowder_math");
-
-const Vec2u = cwl_math.Vec2u;
-const Vec2i = cwl_math.Vec2i;
-
-const base = @import("base.zig");
 const screen = @import("screen.zig");
 
-const Base = base.Base;
-
-pub const Error = base.Error;
+pub const Backend = enum {
+    win32,
+};
 
 pub const WindowPos = union(enum) {
     center,
-    at: Vec2i,
+    at: clw_math.Vec2i,
 };
 
 pub const Event = union(enum) {
     close,
 };
 
-/// Represents a window.
-pub const Window = struct {
-    const Self = @This();
-
-    base: Base,
-    close_on_event: bool,
-    open: bool = true,
-    events: AutoArrayHashMap(Event, void),
-
-    /// Intializes a new `Window`.
-    /// Deinitiliaze it with `deinit`.
-    pub fn init(
-        allocator: Allocator,
-        title: [:0]const u8,
-        position: WindowPos,
-        size: Vec2u,
-        close_on_event: bool,
-    ) Error!Self {
-        const position_vec = switch (position) {
-            .center => @as(Vec2i, @intCast(screen.getSize(.primary) - size)) / Vec2i{ 2, 2 },
-            .at => |at| at,
-        };
-
-        return .{
-            .base = try Base.init(title, position_vec[0], position_vec[1], size[0], size[1]),
-            .close_on_event = close_on_event,
-            .events = AutoArrayHashMap(Event, void).init(allocator),
-        };
-    }
-
-    /// Deinitiliazes the `Window`.
-    pub fn deinit(self: *Self) void {
-        self.events.deinit();
-        self.base.deinit();
-    }
-
-    /// Returns `true` if `Event.close` is emitted.
-    /// Else returns `false`.
-    pub fn shouldClose(self: Self) bool {
-        return self.events.contains(.close);
-    }
-
-    /// Updates the `Window`.
-    pub fn update(self: *Self) !void {
-        self.events.clearRetainingCapacity();
-
-        while (self.base.pollEvent()) |event| {
-            try self.events.put(event, void{});
-        }
-
-        if (self.close_on_event and self.shouldClose()) {
-            self.open = false;
-        }
-    }
+pub const default_backend: Backend = switch (builtin.os.tag) {
+    .windows => .win32,
+    else => @compileError("OS not supported"),
 };
+
+/// Represents a window.
+pub fn Window(comptime backend: Backend) type {
+    return struct {
+        const Self = @This();
+
+        const base = switch (backend) {
+            .win32 => @import("base/win32.zig"),
+        };
+
+        pub const Error = base.Error;
+
+        const Base = base.Base;
+
+        pub const Context = struct {
+            comptime backend: Backend = backend,
+            base: Base,
+        };
+
+        base: Base,
+        close_on_event: bool,
+        open: bool = true,
+        events: std.AutoArrayHashMap(Event, void),
+
+        /// Intializes a new `Window`.
+        /// Deinitiliaze it with `deinit`.
+        pub fn init(
+            allocator: std.mem.Allocator,
+            title: [:0]const u8,
+            position: WindowPos,
+            size: clw_math.Vec2u,
+            close_on_event: bool,
+        ) Error!Self {
+            const position_vec = switch (position) {
+                .center => @as(clw_math.Vec2i, @intCast(screen.getSize(.primary) - size)) /
+                    @as(clw_math.Vec2i, @splat(2)),
+                .at => |at| at,
+            };
+
+            return .{
+                .base = try Base.init(title, position_vec[0], position_vec[1], size[0], size[1]),
+                .close_on_event = close_on_event,
+                .events = std.AutoArrayHashMap(Event, void).init(allocator),
+            };
+        }
+
+        /// Deinitiliazes the `Window`.
+        pub fn deinit(self: *Self) void {
+            self.events.deinit();
+            self.base.deinit();
+        }
+
+        /// Returns a `Context` of the `Window`.
+        pub fn context(self: *Self) Context {
+            return .{
+                .base = self.base,
+            };
+        }
+
+        /// Returns `true` if `Event.close` is emitted.
+        /// Else returns `false`.
+        pub fn shouldClose(self: Self) bool {
+            return self.events.contains(.close);
+        }
+
+        /// Updates the `Window`.
+        pub fn update(self: *Self) !void {
+            self.events.clearRetainingCapacity();
+
+            while (self.base.pollEvent()) |event| {
+                try self.events.put(event, void{});
+            }
+
+            if (self.close_on_event and self.shouldClose()) {
+                self.open = false;
+            }
+        }
+    };
+}
+
+pub const DefaultWindow = Window(default_backend);

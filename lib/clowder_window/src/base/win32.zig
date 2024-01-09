@@ -28,13 +28,7 @@ pub const Base = struct {
     handle: nat.HWND,
     device_context: nat.HDC,
 
-    pub fn init(
-        title: [:0]const u8,
-        x: i32,
-        y: i32,
-        width: u32,
-        height: u32,
-    ) Error!Self {
+    pub fn init(title: [:0]const u8, x: i32, y: i32, width: u32, height: u32) Error!Self {
         const instance = nat.GetModuleHandleA(null) orelse {
             return error.CouldNotGetInstance;
         };

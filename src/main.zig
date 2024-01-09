@@ -6,4 +6,5 @@ pub const window = @import("clowder_window");
 pub const Color = render.Color;
 pub const Renderer = render.Renderer;
 
+pub const DefaultWindow = window.DefaultWindow;
 pub const Window = window.Window;

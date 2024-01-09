@@ -1,15 +1,17 @@
 const std = @import("std");
 
-const cwl_window = @import("clowder_window");
+const clw_window = @import("clowder_window");
 
-const win_nat = cwl_window.native;
+const win_nat = clw_window.native;
 
-const Window = cwl_window.Window;
-const WindowError = cwl_window.WindowError;
-
+const Color = @import("../../Color.zig");
 const nat = @import("../../native/opengl.zig");
 
-pub const Error = WindowError || error{
+const opengl = @import("../opengl.zig");
+
+const Window = clw_window.Window(.win32);
+
+pub const Error = Window.Error || error{
     CouldNotChoosePixelFormat,
     CouldNotDescribePixelFormat,
     CouldNotSetPixelFormat,
@@ -168,15 +170,19 @@ pub const Base = struct {
         return context;
     }
 
-    pub fn init(window: Window) Error!Self {
+    pub fn init(window_context: Window.Context) Error!Self {
         return .{
-            .context = try initContenxt(window.base.device_context),
+            .context = try initContenxt(window_context.base.device_context),
         };
     }
 
     pub fn deinit(_: Self) void {}
 
-    pub fn swap(window: Window) void {
-        _ = win_nat.SwapBuffers(window.base.device_context);
+    pub fn clear(color: Color) void {
+        opengl.clear(color);
+    }
+
+    pub fn swap(window_context: Window.Context) void {
+        _ = win_nat.SwapBuffers(window_context.base.device_context);
     }
 };

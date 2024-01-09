@@ -8,7 +8,7 @@ pub fn main() !void {
 
     const allocator = gpa.allocator();
 
-    var window = try clw.Window.init(
+    var window = try clw.DefaultWindow.init(
         allocator,
         "Triangle",
         .center,
@@ -18,7 +18,7 @@ pub fn main() !void {
 
     defer window.deinit();
 
-    const renderer = try clw.Renderer(.{}).init(window);
+    const renderer = try clw.Renderer(.{}).init(window.context());
     defer renderer.deinit();
 
     while (window.open) {
