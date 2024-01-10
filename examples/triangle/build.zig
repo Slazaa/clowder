@@ -6,7 +6,7 @@ fn thisPath(comptime suffix: []const u8) []const u8 {
     return comptime (std.fs.path.dirname(@src().file) orelse ".") ++ suffix;
 }
 
-pub fn build(b: *std.Build, target: std.zig.CrossTarget, optimize: std.builtin.OptimizeMode) *std.Build.Step.Compile {
+pub fn build(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) *std.Build.Step.Compile {
     const exe = b.addExecutable(.{
         .name = "triangle",
         .root_source_file = .{ .path = thisPath("/src/main.zig") },

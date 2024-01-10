@@ -1,11 +1,11 @@
 const std = @import("std");
 
-const ComponentStorage = @import("component_storage.zig").ComponentStorage;
+const Storage = @import("storage.zig").Storage;
 const Query = @import("query.zig").Query;
 
 const Self = @This();
 
-const ComponentStorageAddress = usize;
+const StorageAddress = usize;
 
 pub const Error = error{
     ComponentAlreadyRegistered,
@@ -15,25 +15,25 @@ pub const Error = error{
 pub const Entity = u32;
 
 allocator: std.mem.Allocator,
-component_storages: std.StringArrayHashMap(ComponentStorageAddress),
+storages: std.StringArrayHashMap(StorageAddress),
 next_entity: Entity,
 
 pub fn init(allocator: std.mem.Allocator) Self {
     return .{
         .allocator = allocator,
-        .component_storages = std.StringArrayHashMap(ComponentStorageAddress).init(allocator),
+        .storages = std.StringArrayHashMap(StorageAddress).init(allocator),
         .next_entity = 0,
     };
 }
 
 pub fn deinit(self: *Self) void {
-    var component_storage_iter = self.component_storages.iterator();
+    var storage_iter = self.storages.iterator();
 
-    while (component_storage_iter.next()) |entry| {
-        const component_storage = entry.value_ptr.*;
+    while (storage_iter.next()) |entry| {
+        const storage = entry.value_ptr.*;
 
-        const component_storage_ptr = @as(*u1, @ptrFromInt(component_storage));
-        self.allocator.destroy(component_storage_ptr);
+        const storage_ptr = @as(*u1, @ptrFromInt(storage));
+        self.allocator.destroy(storage_ptr);
     }
 
     self.component_storages.deinit();
@@ -48,7 +48,7 @@ pub fn spawn(self: *Self) Entity {
 
 pub fn isRegistered(self: *Self, comptime T: type) bool {
     const component_id = @typeName(T);
-    return self.component_storages.contains(component_id);
+    return self.storages.contains(component_id);
 }
 
 fn idFromComponentType(comptime T: type) []const u8 {
@@ -62,44 +62,44 @@ fn register(self: *Self, comptime T: type) !void {
 
     const component_id = idFromComponentType(T);
 
-    const component_storage_ptr = try self.allocator.create(ComponentStorage(T));
-    component_storage_ptr.* = ComponentStorage(T).init(self.allocator);
+    const storage_ptr = try self.allocator.create(Storage(T));
+    storage_ptr.* = Storage(T).init(self.allocator);
 
-    try self.component_storages.put(component_id, @intFromPtr(component_storage_ptr));
+    try self.storages.put(component_id, @intFromPtr(storage_ptr));
 }
 
-fn getComponentStorage(self: Self, comptime T: type) !*ComponentStorage(T) {
+pub fn getStorage(self: Self, comptime T: type) !*Storage(T) {
     if (!self.isRegistered(T)) {
         return error.ComponentNotRegistered;
     }
 
     const component_id = idFromComponentType(T);
 
-    return @ptrFromInt(self.component_storages.get(component_id));
+    return @ptrFromInt(self.storages.get(component_id));
 }
 
 pub fn has(self: Self, comptime T: type, entity: Entity) bool {
-    const component_storage = self.getComponentStorage(T) catch {
+    const storage = self.getStorage(T) catch {
         return false;
     };
 
-    return component_storage.contains(entity);
+    return storage.contains(entity);
 }
 
 pub fn get(self: Self, comptime T: type, entity: Entity) ?T {
-    const component_storage = self.getComponentStorage(T) catch {
+    const storage = self.getStorage(T) catch {
         return null;
     };
 
-    return component_storage.get(entity);
+    return storage.get(entity);
 }
 
 pub fn getPtr(self: Self, comptime T: type, entity: Entity) *T {
-    const component_storage = self.getComponentStorage(T) catch {
+    const storage = self.getStorage(T) catch {
         return null;
     };
 
-    return component_storage.getPtr(entity);
+    return storage.getPtr(entity);
 }
 
 pub fn query(self: Self, comptime includes: anytype, comptime excludes: anytype) Query {

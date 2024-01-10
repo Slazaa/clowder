@@ -34,17 +34,6 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const module = b.addModule("sdl2", .{
-        .source_file = .{ .path = "src/main.zig" },
-        .dependencies = &.{},
-    });
-
-    var dep_iter = module.dependencies.iterator();
-
-    while (dep_iter.next()) |e| {
-        lib.addModule(e.key_ptr.*, e.value_ptr.*);
-    }
-
     _ = link(b, lib);
 
     b.installArtifact(lib);
@@ -54,8 +43,8 @@ pub fn build(b: *std.Build) void {
 
 pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
     const module = b.createModule(.{
-        .source_file = .{ .path = thisPath("/src/main.zig") },
-        .dependencies = &.{
+        .root_source_file = .{ .path = thisPath("/src/main.zig") },
+        .imports = &.{
             .{
                 .name = "clowder_ecs",
                 .module = clw_ecs.link(b, step),
@@ -75,7 +64,7 @@ pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
         },
     });
 
-    step.addModule("clowder", module);
+    step.root_module.addImport("clowder", module);
 
     return module;
 }

@@ -42,12 +42,12 @@ pub fn link(b: *std.Build, step: *CompileStep) *Module {
     }
 
     module = b.createModule(.{
-        .source_file = .{ .path = thisPath("/src/main.zig") },
+        .root_source_file = .{ .path = thisPath("/src/main.zig") },
     });
 
     const module_ = module.?;
 
-    step.addModule("clowder_ecs", module_);
+    step.root_module.addImport("clowder_ecs", module_);
 
     return module_;
 }

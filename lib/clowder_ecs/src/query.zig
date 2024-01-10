@@ -1,5 +1,9 @@
+const std = @import("std");
+
 const Registry = @import("Registry.zig");
 const Entity = Registry.Entity;
+
+const Storage = @import("storage.zig").Storage;
 
 pub fn Query(comptime includes: anytype, comptime excludes: anytype) type {
     {
@@ -8,9 +12,7 @@ pub fn Query(comptime includes: anytype, comptime excludes: anytype) type {
         if (@typeInfo(IncludesType) != .Struct) {
             @compileError("Expected tuple for includes, found '" ++ @typeName(IncludesType) ++ "'");
         }
-    }
 
-    {
         const ExcludesType = @TypeOf(excludes);
 
         if (@typeInfo(ExcludesType) != .Struct) {

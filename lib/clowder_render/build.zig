@@ -38,8 +38,8 @@ pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
     }
 
     module = b.createModule(.{
-        .source_file = .{ .path = thisPath("/src/main.zig") },
-        .dependencies = &.{
+        .root_source_file = .{ .path = thisPath("/src/main.zig") },
+        .imports = &.{
             .{
                 .name = "clowder_window",
                 .module = clw_window.link(b, step),
@@ -49,7 +49,7 @@ pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
 
     const module_ = module.?;
 
-    step.addModule("clowder_render", module_);
+    step.root_module.addImport("clowder_render", module_);
 
     return module_;
 }
