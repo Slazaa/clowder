@@ -14,7 +14,7 @@ pub fn build(b: *std.Build) void {
 
     const lib = b.addStaticLibrary(.{
         .name = "clowder_window",
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = .{ .path = "src/root.zig" },
         .target = target,
         .optimize = optimize,
     });
@@ -32,7 +32,7 @@ pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
     }
 
     module = b.createModule(.{
-        .root_source_file = .{ .path = thisPath("/src/main.zig") },
+        .root_source_file = .{ .path = thisPath("/src/root.zig") },
         .imports = &.{
             .{
                 .name = "clowder_math",

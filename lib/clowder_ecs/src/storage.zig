@@ -1,8 +1,8 @@
 const std = @import("std");
 
-const main = @import("main.zig");
+const Registry = @import("Registry.zig");
 
-const Entity = main.Entity;
+const Entity = Registry.Entity;
 
 pub const Error = error{
     EntityAlreadyAdded,
@@ -17,26 +17,33 @@ pub fn Storage(comptime Component: type) type {
     return struct {
         const Self = @This();
 
+        allocator: std.mem.Allocator,
         entities: std.ArrayList(Entity),
         instances: std.ArrayList(ComponentOrDummy),
 
-        pub fn init(allocator: std.mem.Allocator) Self {
-            return .{
+        pub fn init(allocator: std.mem.Allocator) !*Self {
+            const self = try allocator.create(Self);
+            self.* = .{
+                .allocator = allocator,
                 .entities = std.ArrayList(Entity).init(allocator),
                 .instances = if (!empty_struct) std.ArrayList(ComponentOrDummy).init(allocator) else undefined,
             };
+
+            return self;
         }
 
-        pub fn deinit(self: Self) void {
+        pub fn deinit(self: *Self) void {
             if (!empty_struct) {
                 self.instances.deinit();
             }
 
             self.entities.deinit();
+
+            self.allocator.destroy(self);
         }
 
         pub fn has(self: Self, entity: Entity) bool {
-            return std.mem.containsAtLeast(Entity, self.entities.items, 1, entity);
+            return std.mem.containsAtLeast(Entity, self.entities.items, 1, &.{entity});
         }
 
         pub fn getEntityIndex(self: Self, entity: Entity) !usize {
