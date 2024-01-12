@@ -2,7 +2,15 @@ const std = @import("std");
 
 const testing = std.testing;
 
-pub const Registry = @import("Registry.zig");
+const registry = @import("registry.zig");
+const storage = @import("storage.zig");
+
+pub const Entity = registry.Entity;
+pub const RegistryError = registry.Error;
+pub const Registry = registry.Registry;
+
+pub const StorageError = storage.Error;
+pub const Storage = storage.Storage;
 
 const Component = struct {
     value: u32,
@@ -11,11 +19,11 @@ const Component = struct {
 const allocator = testing.allocator;
 
 test "component test" {
-    var registry = Registry.init(allocator);
-    defer registry.deinit();
+    var reg = Registry(.{Component}).init(allocator);
+    defer reg.deinit();
 
     const entity = registry.spawn();
-    try registry.add(entity, Component{ .value = 10 });
+    try reg.add(entity, Component{ .value = 10 });
 
     // const component = registry.get(Component, entity) orelse {
     //     return error.CouldNotGetComponent;

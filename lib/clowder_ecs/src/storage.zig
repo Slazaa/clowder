@@ -25,6 +25,7 @@ pub fn Storage(comptime Component: type) type {
             const self = try allocator.create(Self);
             self.* = .{
                 .allocator = allocator,
+                .alignment = @alignOf(Component),
                 .entities = std.ArrayList(Entity).init(allocator),
                 .instances = if (!empty_struct) std.ArrayList(ComponentOrDummy).init(allocator) else undefined,
             };
