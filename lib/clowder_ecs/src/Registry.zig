@@ -17,7 +17,7 @@ const Self = @This();
 
 const AlignedPtr = struct {
     bytes: []u8,
-    alignment: std.mem.Allocator.Log2Align,
+    log2_align: std.mem.Allocator.Log2Align,
 
     pub fn init(ptr: anytype) @This() {
         const Ptr = @TypeOf(ptr);
@@ -28,12 +28,12 @@ const AlignedPtr = struct {
 
         return .{
             .bytes = std.mem.asBytes(ptr),
-            .alignment = @typeInfo(Ptr).Pointer.alignment,
+            .log2_align = std.math.log2(@typeInfo(Ptr).Pointer.alignment),
         };
     }
 
     pub fn deinit(self: @This(), allocator: std.mem.Allocator) void {
-        allocator.rawFree(self.bytes, std.math.log2(self.alignment), @returnAddress());
+        allocator.rawFree(self.bytes, self.log2_align, @returnAddress());
     }
 };
 

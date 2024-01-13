@@ -16,7 +16,7 @@ pub fn Storage(comptime Component: type) type {
         const Self = @This();
 
         allocator: std.mem.Allocator,
-        alignment: std.mem.Allocator.Log2Align,
+        log2_align: std.mem.Allocator.Log2Align,
         entities: std.ArrayListUnmanaged(Entity),
         instances: std.ArrayListUnmanaged(Component),
 
@@ -24,7 +24,7 @@ pub fn Storage(comptime Component: type) type {
             const self = try allocator.create(Self);
             self.* = .{
                 .allocator = allocator,
-                .alignment = @alignOf(Component),
+                .log2_align = std.math.log2(@alignOf(Component)),
                 .entities = std.ArrayListUnmanaged(Entity){},
                 .instances = if (!empty_struct) std.ArrayListUnmanaged(Component){} else undefined,
             };
@@ -34,11 +34,13 @@ pub fn Storage(comptime Component: type) type {
 
         pub fn deinit(self: *Self) void {
             if (!empty_struct) {
+                const alignment = std.math.pow(u32, 2, self.log2_align);
+
                 var bytes: []u8 = undefined;
                 bytes.ptr = @ptrCast(self.instances.items.ptr);
-                bytes.len = self.instances.capacity * self.alignment;
+                bytes.len = self.instances.capacity * alignment;
 
-                self.allocator.rawFree(bytes, std.math.log2(self.alignment), @returnAddress());
+                self.allocator.rawFree(bytes, self.log2_align, @returnAddress());
             }
 
             self.entities.deinit(self.allocator);
