@@ -12,22 +12,21 @@ pub const Error = error{
 pub fn Storage(comptime Component: type) type {
     const empty_struct = @sizeOf(Component) == 0;
 
-    const ComponentOrDummy = if (empty_struct) struct { dummy: u1 } else Component;
-
     return struct {
         const Self = @This();
 
         allocator: std.mem.Allocator,
-        entities: std.ArrayList(Entity),
-        instances: std.ArrayList(ComponentOrDummy),
+        alignment: std.mem.Allocator.Log2Align,
+        entities: std.ArrayListUnmanaged(Entity),
+        instances: std.ArrayListUnmanaged(Component),
 
         pub fn init(allocator: std.mem.Allocator) !*Self {
             const self = try allocator.create(Self);
             self.* = .{
                 .allocator = allocator,
                 .alignment = @alignOf(Component),
-                .entities = std.ArrayList(Entity).init(allocator),
-                .instances = if (!empty_struct) std.ArrayList(ComponentOrDummy).init(allocator) else undefined,
+                .entities = std.ArrayListUnmanaged(Entity){},
+                .instances = if (!empty_struct) std.ArrayListUnmanaged(Component){} else undefined,
             };
 
             return self;
@@ -35,10 +34,14 @@ pub fn Storage(comptime Component: type) type {
 
         pub fn deinit(self: *Self) void {
             if (!empty_struct) {
-                self.instances.deinit();
+                var bytes: []u8 = undefined;
+                bytes.ptr = @ptrCast(self.instances.items.ptr);
+                bytes.len = self.instances.capacity * self.alignment;
+
+                self.allocator.rawFree(bytes, std.math.log2(self.alignment), @returnAddress());
             }
 
-            self.entities.deinit();
+            self.entities.deinit(self.allocator);
 
             self.allocator.destroy(self);
         }
@@ -61,10 +64,10 @@ pub fn Storage(comptime Component: type) type {
             }
 
             if (!empty_struct) {
-                try self.instances.append(component);
+                try self.instances.append(self.allocator, component);
             }
 
-            try self.entities.append(entity);
+            try self.entities.append(self.allocator, entity);
         }
 
         pub fn remove(self: *Self, entity: Entity) bool {
@@ -90,7 +93,7 @@ pub fn Storage(comptime Component: type) type {
                     return self.instances.items[entity_index];
                 }
 
-                pub fn getPtr(self: Self, entity: Entity) ?Component {
+                pub fn getPtr(self: Self, entity: Entity) ?*Component {
                     const entity_index = self.getEntityIndex(entity) catch return null;
                     return &self.instances.items[entity_index];
                 }

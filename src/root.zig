@@ -8,3 +8,11 @@ pub const Renderer = render.Renderer;
 
 pub const DefaultWindow = window.DefaultWindow;
 pub const Window = window.Window;
+
+pub const App = @import("App.zig");
+
+pub const Plugin = *const fn (app: *App) anyerror!void;
+
+pub fn defaultPlugin(app: *App) !void {
+    _ = app;
+}
