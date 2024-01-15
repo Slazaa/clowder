@@ -1,3 +1,3 @@
 # Clowder
 
-A simple game engine built in Zig.
+A simple game engine written in Zig.

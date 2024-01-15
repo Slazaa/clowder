@@ -181,3 +181,15 @@ pub fn addResource(self: *Self, resource: anytype) !void {
 
     try self.resources.put(resource_id, AlignedPtr.init(resource_ptr));
 }
+
+pub fn removeResource(self: *Self, comptime Resource: type) bool {
+    const resource_id = getResourceId(Resource);
+
+    const resource_ptr = self.resources.get(resource_id) orelse {
+        return false;
+    };
+
+    resource_ptr.deinit(self.allocator);
+
+    return self.resources.swapRemove(resource_id);
+}

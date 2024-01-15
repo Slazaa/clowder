@@ -11,8 +11,15 @@ pub const Window = window.Window;
 
 pub const App = @import("App.zig");
 
-pub const Plugin = *const fn (app: *App) anyerror!void;
+pub const System = App.System;
+pub const Plugin = App.Plugin;
 
-pub fn defaultPlugin(app: *App) !void {
-    _ = app;
-}
+pub const plugin = @import("plugin.zig");
+
+pub const MainWindow = plugin.main_window.MainWindow;
+
+pub const default_plugin = Plugin{
+    .plugins = &.{
+        plugin.main_window.plugin,
+    },
+};

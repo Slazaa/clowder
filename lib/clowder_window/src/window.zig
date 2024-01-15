@@ -42,8 +42,6 @@ pub fn Window(comptime backend: Backend) type {
         };
 
         base: Base,
-        close_on_event: bool,
-        open: bool = true,
         events: std.AutoArrayHashMap(Event, void),
 
         /// Intializes a new `Window`.
@@ -53,7 +51,6 @@ pub fn Window(comptime backend: Backend) type {
             title: [:0]const u8,
             position: WindowPos,
             size: clw_math.Vec2u,
-            close_on_event: bool,
         ) Error!Self {
             const position_vec = switch (position) {
                 .center => @as(clw_math.Vec2i, @intCast(screen.getSize(.primary) - size)) /
@@ -63,7 +60,6 @@ pub fn Window(comptime backend: Backend) type {
 
             return .{
                 .base = try Base.init(title, position_vec[0], position_vec[1], size[0], size[1]),
-                .close_on_event = close_on_event,
                 .events = std.AutoArrayHashMap(Event, void).init(allocator),
             };
         }
@@ -93,10 +89,6 @@ pub fn Window(comptime backend: Backend) type {
 
             while (self.base.pollEvent()) |event| {
                 try self.events.put(event, void{});
-            }
-
-            if (self.close_on_event and self.shouldClose()) {
-                self.open = false;
             }
         }
     };
