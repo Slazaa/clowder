@@ -14,7 +14,7 @@ pub const WindowPos = union(enum) {
     at: clw_math.Vec2i,
 };
 
-pub const Event = union(enum) {
+pub const Event = enum(u1) {
     close,
 };
 
@@ -42,7 +42,7 @@ pub fn Window(comptime backend: Backend) type {
         };
 
         base: Base,
-        events: std.AutoArrayHashMap(Event, void),
+        events: std.ArrayList(Event),
 
         /// Intializes a new `Window`.
         /// Deinitiliaze it with `deinit`.
@@ -60,12 +60,12 @@ pub fn Window(comptime backend: Backend) type {
 
             return .{
                 .base = try Base.init(title, position_vec[0], position_vec[1], size[0], size[1]),
-                .events = std.AutoArrayHashMap(Event, void).init(allocator),
+                .events = std.ArrayList(Event).init(allocator),
             };
         }
 
         /// Deinitiliazes the `Window`.
-        pub fn deinit(self: *Self) void {
+        pub fn deinit(self: Self) void {
             self.events.deinit();
             self.base.deinit();
         }
@@ -77,10 +77,18 @@ pub fn Window(comptime backend: Backend) type {
             };
         }
 
+        pub fn hasEvent(self: Self, event: Event) bool {
+            return std.mem.containsAtLeast(Event, self.events.items, 1, &.{event});
+        }
+
+        pub fn emitEvent(self: *Self, event: Event) !void {
+            try self.events.append(event);
+        }
+
         /// Returns `true` if `Event.close` is emitted.
         /// Else returns `false`.
         pub fn shouldClose(self: Self) bool {
-            return self.events.contains(.close);
+            return self.hasEvent(.close);
         }
 
         /// Updates the `Window`.
@@ -88,7 +96,7 @@ pub fn Window(comptime backend: Backend) type {
             self.events.clearRetainingCapacity();
 
             while (self.base.pollEvent()) |event| {
-                try self.events.put(event, void{});
+                try self.emitEvent(event);
             }
         }
     };

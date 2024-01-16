@@ -17,16 +17,16 @@ pub fn Storage(comptime Component: type) type {
 
         allocator: std.mem.Allocator,
         log2_align: std.mem.Allocator.Log2Align,
-        entities: std.ArrayList(Entity),
-        instances: std.ArrayList(Component),
+        entities: std.ArrayListUnmanaged(Entity),
+        instances: std.ArrayListUnmanaged(Component),
 
         pub fn init(allocator: std.mem.Allocator) !*Self {
             const self = try allocator.create(Self);
             self.* = .{
                 .allocator = allocator,
                 .log2_align = std.math.log2(@alignOf(Component)),
-                .entities = std.ArrayList(Entity).init(allocator),
-                .instances = if (!empty_struct) std.ArrayList(Component).init(allocator) else undefined,
+                .entities = std.ArrayListUnmanaged(Entity){},
+                .instances = if (!empty_struct) std.ArrayListUnmanaged(Component){} else undefined,
             };
 
             return self;
@@ -43,7 +43,7 @@ pub fn Storage(comptime Component: type) type {
                 self.allocator.rawFree(bytes, self.log2_align, @returnAddress());
             }
 
-            self.entities.deinit();
+            self.entities.deinit(self.allocator);
 
             self.allocator.destroy(self);
         }
@@ -66,10 +66,10 @@ pub fn Storage(comptime Component: type) type {
             }
 
             if (!empty_struct) {
-                try self.instances.append(component);
+                try self.instances.append(self.allocator, component);
             }
 
-            try self.entities.append(entity);
+            try self.entities.append(self.allocator, entity);
         }
 
         pub fn remove(self: *Self, entity: Entity) bool {

@@ -15,31 +15,8 @@ pub const Entity = u32;
 
 const Self = @This();
 
-const AlignedPtr = struct {
-    bytes: []u8,
-    log2_align: std.mem.Allocator.Log2Align,
-
-    pub fn init(ptr: anytype) @This() {
-        const Ptr = @TypeOf(ptr);
-
-        if (@typeInfo(Ptr) != .Pointer) {
-            @compileError("Epxected pointer, found '" ++ @typeName(Ptr) ++ "'");
-        }
-
-        return .{
-            .bytes = std.mem.asBytes(ptr),
-            .log2_align = std.math.log2(@typeInfo(Ptr).Pointer.alignment),
-        };
-    }
-
-    pub fn deinit(self: @This(), allocator: std.mem.Allocator) void {
-        allocator.rawFree(self.bytes, self.log2_align, @returnAddress());
-    }
-};
-
 allocator: std.mem.Allocator,
-storages: std.StringArrayHashMap(StorageAddr),
-resources: std.StringArrayHashMap(AlignedPtr),
+storages: std.StringArrayHashMapUnmanaged(StorageAddr),
 next_entity: Entity,
 
 /// Initializes a new `Registry`.
@@ -47,26 +24,19 @@ next_entity: Entity,
 pub fn init(allocator: std.mem.Allocator) !Self {
     return .{
         .allocator = allocator,
-        .storages = std.StringArrayHashMap(StorageAddr).init(allocator),
-        .resources = std.StringArrayHashMap(AlignedPtr).init(allocator),
+        .storages = std.StringArrayHashMapUnmanaged(StorageAddr){},
         .next_entity = 0,
     };
 }
 
 /// Deinitializes the `Registry`.
 pub fn deinit(self: *Self) void {
-    for (self.resources.values()) |resource_ptr| {
-        resource_ptr.deinit(self.allocator);
-    }
-
-    self.resources.deinit();
-
     for (self.storages.values()) |storage_addr| {
         const storage: *Storage(u1) = @ptrFromInt(storage_addr);
         storage.deinit();
     }
 
-    self.storages.deinit();
+    self.storages.deinit(self.allocator);
 }
 
 /// Spawns a new `Entity` and return it.
@@ -91,7 +61,7 @@ fn registerComponent(self: *Self, comptime Component: type) !void {
     }
 
     const storage = try Storage(Component).init(self.allocator);
-    try self.storages.put(getComponentId(Component), @intFromPtr(storage));
+    try self.storages.put(self.allocator, getComponentId(Component), @intFromPtr(storage));
 }
 
 pub fn getStorage(self: Self, comptime T: type) Error!*Storage(T) {
@@ -141,55 +111,4 @@ pub fn addComponent(self: *Self, entity: Entity, component: anytype) !void {
 
 pub fn query(self: Self, comptime includes: anytype, comptime excludes: anytype) Query {
     return Query(includes, excludes).init(self);
-}
-
-fn getResourceId(comptime Resource: type) []const u8 {
-    return @typeName(Resource);
-}
-
-pub fn hasResource(self: Self, comptime Resource: type) bool {
-    return self.resources.contains(getResourceId(Resource));
-}
-
-pub fn getResource(self: Self, comptime Resource: type) ?Resource {
-    const resource_ptr = self.getResourcePtr(Resource) orelse {
-        return null;
-    };
-
-    return resource_ptr.*;
-}
-
-pub fn getResourcePtr(self: Self, comptime Resource: type) ?*Resource {
-    const resource_ptr = self.resources.get(getResourceId(Resource)) orelse {
-        return null;
-    };
-
-    return @ptrCast(@alignCast(resource_ptr.bytes));
-}
-
-pub fn addResource(self: *Self, resource: anytype) !void {
-    const Resource = @TypeOf(resource);
-
-    if (self.hasResource(Resource)) {
-        return Error.ResourceAlreadyPresent;
-    }
-
-    const resource_ptr = try self.allocator.create(Resource);
-    resource_ptr.* = resource;
-
-    const resource_id = getResourceId(Resource);
-
-    try self.resources.put(resource_id, AlignedPtr.init(resource_ptr));
-}
-
-pub fn removeResource(self: *Self, comptime Resource: type) bool {
-    const resource_id = getResourceId(Resource);
-
-    const resource_ptr = self.resources.get(resource_id) orelse {
-        return false;
-    };
-
-    resource_ptr.deinit(self.allocator);
-
-    return self.resources.swapRemove(resource_id);
 }

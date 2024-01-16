@@ -2,10 +2,10 @@ const std = @import("std");
 
 const ecs = @import("clowder_ecs");
 
+const Self = @This();
+
 pub const System = *const fn (app: *Self) anyerror!void;
 pub const DeinitSystem = *const fn (app: *Self) void;
-
-const Self = @This();
 
 pub const Plugin = struct {
     plugins: []const Plugin = &.{},
@@ -61,14 +61,6 @@ pub fn init(allocator: std.mem.Allocator, plugin: Plugin) !Self {
 
 pub fn deinit(self: *Self) void {
     self.systems.deinit();
-
-    for (0..self.deinit_systems.items.len) |index| {
-        const i = self.deinit_systems.items.len - index - 1;
-
-        const system: DeinitSystem = @ptrFromInt(self.deinit_systems.items[i]);
-        system(self);
-    }
-
     self.deinit_systems.deinit();
 
     self.registry.deinit();
@@ -81,28 +73,15 @@ pub fn run(self: *Self) !void {
             try system(self);
         }
     }
+
+    for (0..self.deinit_systems.items.len) |index| {
+        const i = self.deinit_systems.items.len - index - 1;
+
+        const system: DeinitSystem = @ptrFromInt(self.deinit_systems.items[i]);
+        system(self);
+    }
 }
 
 pub inline fn exit(self: *Self) void {
     self.is_exit = true;
-}
-
-pub fn hasResource(self: Self, comptime Resource: type) bool {
-    return self.registry.hasResource(Resource);
-}
-
-pub fn getResource(self: Self, comptime Resource: type) ?Resource {
-    return self.registry.getResource(Resource);
-}
-
-pub fn getResourcePtr(self: Self, comptime Resource: type) ?*Resource {
-    return self.registry.getResourcePtr(Resource);
-}
-
-pub fn addResource(self: *Self, resource: anytype) !void {
-    return try self.registry.addResource(resource);
-}
-
-pub fn removeResource(self: *Self, comptime Resource: type) bool {
-    return self.registry.removeResource(Resource);
 }
