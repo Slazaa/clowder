@@ -77,10 +77,13 @@ pub fn Window(comptime backend: Backend) type {
             };
         }
 
-        pub fn hasEvent(self: Self, event: Event) bool {
+        /// Returns `true` if `event` is emitted.
+        /// Else returns `false`.
+        pub fn isEventEmitted(self: Self, event: Event) bool {
             return std.mem.containsAtLeast(Event, self.events.items, 1, &.{event});
         }
 
+        /// Emits `event`.
         pub fn emitEvent(self: *Self, event: Event) !void {
             try self.events.append(event);
         }
@@ -88,7 +91,7 @@ pub fn Window(comptime backend: Backend) type {
         /// Returns `true` if `Event.close` is emitted.
         /// Else returns `false`.
         pub fn shouldClose(self: Self) bool {
-            return self.hasEvent(.close);
+            return self.isEventEmitted(.close);
         }
 
         /// Updates the `Window`.

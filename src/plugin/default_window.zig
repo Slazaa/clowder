@@ -5,7 +5,7 @@ const root = @import("../root.zig");
 pub fn initSystem(app: *root.App) !void {
     const main_window = app.spawn();
 
-    var window = try root.Window.init(
+    var window = try root.DefaultWindow.init(
         app.allocator,
         "Clowder Window",
         .center,
@@ -14,7 +14,7 @@ pub fn initSystem(app: *root.App) !void {
 
     errdefer window.deinit();
 
-    const renderer = try root.Renderer.init(window.window.context());
+    const renderer = try root.Renderer(.{}).init(window.context());
     errdefer renderer.deinit();
 
     try app.add(main_window, window);
@@ -24,29 +24,30 @@ pub fn initSystem(app: *root.App) !void {
 }
 
 pub fn deinitSystem(app: *root.App) void {
-    var query = app.query(.{root.Window}, .{});
+    const main_window = app.getFirstByTag("main_window") orelse return;
 
-    while (query.next()) |entity| {
-        const window = app.get(entity, root.Window).?;
-        window.deinit();
-    }
+    const window = app.get(main_window, root.DefaultWindow).?;
+    const renderer = app.get(main_window, root.Renderer(.{})).?;
+
+    window.deinit();
+    renderer.deinit();
 }
 
 pub fn system(app: *root.App) !void {
-    const main_window = app.getFistByTag("main_window") orelse return;
+    const main_window = app.getFirstByTag("main_window") orelse return;
 
-    const window = app.getPtr(main_window, root.Window).?;
-    const renderer = app.get(main_window, root.Renderer).?;
+    const window = app.getPtr(main_window, root.DefaultWindow).?;
+    const renderer = app.get(main_window, root.Renderer(.{})).?;
 
-    try window.window.update();
+    try window.update();
 
-    if (window.window.shouldClose()) {
+    if (window.shouldClose()) {
         app.exit();
     }
 
-    renderer.renderer.clear(root.Color.black);
+    renderer.clear(root.Color.black);
 
-    renderer.renderer.swap();
+    renderer.swap();
 }
 
 pub const plugin = root.App.Plugin{

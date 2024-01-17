@@ -105,6 +105,7 @@ pub fn Query(comptime includes: anytype, comptime excludes: anytype) type {
             };
         }
 
+        /// Returns the next `Entity` in the `Query`.
         pub fn next(self: *Self) ?Entity {
             if (self.include_base_entity_list.len == 0 or
                 self.index >= self.include_base_entity_list.len)

@@ -47,6 +47,8 @@ tags: std.StringArrayHashMapUnmanaged(std.ArrayListUnmanaged(ecs.Entity)) = std.
 
 is_exit: bool = false,
 
+/// Initiliazes a new `App`.
+/// Deinitialize it with `deinit`.
 pub fn init(allocator: std.mem.Allocator, plugin: Plugin) !Self {
     var self = Self{
         .allocator = allocator,
@@ -58,6 +60,7 @@ pub fn init(allocator: std.mem.Allocator, plugin: Plugin) !Self {
     return self;
 }
 
+/// Deinitializes the `App`.
 pub fn deinit(self: *Self) void {
     for (self.tags.values()) |*entity_list| {
         entity_list.deinit(self.allocator);
@@ -71,6 +74,7 @@ pub fn deinit(self: *Self) void {
     self.registry.deinit();
 }
 
+/// Runs the `App`.
 pub fn run(self: *Self) !void {
     while (!self.is_exit) {
         for (self.systems.items) |system_addr| {
@@ -87,31 +91,40 @@ pub fn run(self: *Self) !void {
     }
 }
 
+/// Exists the `App`.
 pub inline fn exit(self: *Self) void {
     self.is_exit = true;
 }
 
+/// Spawns a new `Entity`.
 pub fn spawn(self: *Self) ecs.Entity {
     return self.registry.spawn();
 }
 
+/// Returns the `Component` of `entity`.
 pub fn get(self: Self, entity: ecs.Entity, comptime Component: type) ?Component {
     return self.registry.get(entity, Component);
 }
 
+/// Returns a pointer to the `Component` of `entity`.
 pub fn getPtr(self: Self, entity: ecs.Entity, comptime Component: type) ?*Component {
     return self.registry.getPtr(entity, Component);
 }
 
+/// Adds `component` to `entity`.
 pub fn add(self: *Self, entity: ecs.Entity, component: anytype) !void {
     try self.registry.add(entity, component);
 }
 
+/// Returns a `Query` that filters entities depending on the components
+/// they have or not.
 pub fn query(self: Self, comptime includes: anytype, comptime excludes: anytype) ecs.Query(includes, excludes) {
     return self.registry.query(includes, excludes);
 }
 
-pub fn getFistByTag(self: Self, tag: []const u8) ?ecs.Entity {
+/// Returns the first `Entity` with `tag`.
+/// If none exist, returns `null`.
+pub fn getFirstByTag(self: Self, tag: []const u8) ?ecs.Entity {
     if (!self.tags.contains(tag)) {
         return null;
     }
@@ -125,6 +138,7 @@ pub fn getFistByTag(self: Self, tag: []const u8) ?ecs.Entity {
     return entity_list.items[0];
 }
 
+/// Adds `tag` to `entity`.
 pub fn addTag(self: *Self, entity: ecs.Entity, tag: []const u8) !void {
     if (!self.tags.contains(tag)) {
         const entity_list = std.ArrayListUnmanaged(ecs.Entity){};

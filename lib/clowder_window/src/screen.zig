@@ -2,6 +2,7 @@ const builtin = @import("builtin");
 
 const os = builtin.os;
 
+/// Represents a screen.
 pub const Screen = enum {
     primary,
 };
