@@ -11,6 +11,8 @@ pub const RegistryError = Registry.Error;
 pub const StorageError = storage.Error;
 pub const Storage = storage.Storage;
 
+pub const Query = @import("query.zig").Query;
+
 const A = struct {
     value: u32,
 };

@@ -1,1 +1,1 @@
-pub const main_window = @import("plugin/main_window.zig");
+pub const default_window = @import("plugin/default_window.zig");

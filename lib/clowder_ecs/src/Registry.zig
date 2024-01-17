@@ -5,18 +5,17 @@ const Query = @import("query.zig").Query;
 
 const StorageAddr = usize;
 
-pub const Error = error{
-    ComponentAlreadyRegistered,
-    ComponentNotRegistered,
-    ResourceAlreadyPresent,
-};
-
 pub const Entity = u32;
+
+pub const Error = error{
+    ComponentAlreadyRegisted,
+    ComponentNotRegistered,
+};
 
 const Self = @This();
 
 allocator: std.mem.Allocator,
-storages: std.StringArrayHashMapUnmanaged(StorageAddr),
+storages: std.StringArrayHashMapUnmanaged(StorageAddr) = std.StringArrayHashMapUnmanaged(StorageAddr){},
 next_entity: Entity,
 
 /// Initializes a new `Registry`.
@@ -24,7 +23,6 @@ next_entity: Entity,
 pub fn init(allocator: std.mem.Allocator) !Self {
     return .{
         .allocator = allocator,
-        .storages = std.StringArrayHashMapUnmanaged(StorageAddr){},
         .next_entity = 0,
     };
 }
@@ -51,21 +49,25 @@ fn getComponentId(comptime Component: type) []const u8 {
     return @typeName(Component);
 }
 
-pub fn isComponentRegistered(self: Self, comptime T: type) bool {
-    return self.storages.contains(getComponentId(T));
+pub fn isRegistered(self: Self, comptime Component: type) bool {
+    return self.storages.contains(getComponentId(Component));
 }
 
-fn registerComponent(self: *Self, comptime Component: type) !void {
-    if (self.isComponentRegistered(Component)) {
-        return Error.ComponentAlreadyRegistered;
+fn register(self: *Self, comptime Component: type) !void {
+    if (@typeInfo(Component) == .ErrorUnion) {
+        @compileError("Found error union, check that you handle the errors when initializing components");
+    }
+
+    if (self.isRegistered(Component)) {
+        return Error.ComponentAlreadyRegisted;
     }
 
     const storage = try Storage(Component).init(self.allocator);
     try self.storages.put(self.allocator, getComponentId(Component), @intFromPtr(storage));
 }
 
-pub fn getStorage(self: Self, comptime T: type) Error!*Storage(T) {
-    const component_id = getComponentId(T);
+pub fn getStorage(self: Self, comptime Component: type) !*Storage(Component) {
+    const component_id = getComponentId(Component);
 
     const storage_addr = self.storages.get(component_id) orelse {
         return Error.ComponentNotRegistered;
@@ -74,41 +76,41 @@ pub fn getStorage(self: Self, comptime T: type) Error!*Storage(T) {
     return @ptrFromInt(storage_addr);
 }
 
-pub fn hasComponent(self: Self, comptime T: type, entity: Entity) bool {
-    const storage = self.getStorage(T) catch {
+pub fn has(self: Self, entity: Entity, comptime Component: type) bool {
+    const storage = self.getStorage(Component) catch {
         return false;
     };
 
     return storage.contains(entity);
 }
 
-pub fn getComponent(self: Self, comptime T: type, entity: Entity) ?T {
-    const storage = self.getStorage(T) catch {
+pub fn get(self: Self, entity: Entity, comptime Component: type) ?Component {
+    const storage = self.getStorage(Component) catch {
         return null;
     };
 
     return storage.get(entity);
 }
 
-pub fn getComponentPtr(self: Self, comptime T: type, entity: Entity) ?*T {
-    const storage = self.getStorage(T) catch {
+pub fn getPtr(self: Self, entity: Entity, comptime Component: type) ?*Component {
+    const storage = self.getStorage(Component) catch {
         return null;
     };
 
     return storage.getPtr(entity);
 }
 
-pub fn addComponent(self: *Self, entity: Entity, component: anytype) !void {
+pub fn add(self: *Self, entity: Entity, component: anytype) !void {
     const Component = @TypeOf(component);
 
-    if (!self.isComponentRegistered(Component)) {
-        try self.registerComponent(Component);
+    if (!self.isRegistered(Component)) {
+        try self.register(Component);
     }
 
     var storage = try self.getStorage(Component);
     try storage.add(entity, component);
 }
 
-pub fn query(self: Self, comptime includes: anytype, comptime excludes: anytype) Query {
+pub fn query(self: Self, comptime includes: anytype, comptime excludes: anytype) Query(includes, excludes) {
     return Query(includes, excludes).init(self);
 }

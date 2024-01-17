@@ -10,8 +10,8 @@ pub const DeinitSystem = *const fn (app: *Self) void;
 pub const Plugin = struct {
     plugins: []const Plugin = &.{},
 
-    init_systems: []const System = &.{},
-    deinit_systems: []const DeinitSystem = &.{},
+    initSystems: []const System = &.{},
+    deinitSystems: []const DeinitSystem = &.{},
     systems: []const System = &.{},
 
     pub fn load(self: @This(), app: *Self) !void {
@@ -19,18 +19,18 @@ pub const Plugin = struct {
             try plugin.load(app);
         }
 
-        for (self.init_systems) |system| {
+        for (self.initSystems) |system| {
             try system(app);
         }
 
-        for (self.deinit_systems) |system| {
+        for (self.deinitSystems) |system| {
             const system_addr = @intFromPtr(system);
-            try app.deinit_systems.append(system_addr);
+            try app.deinit_systems.append(app.allocator, system_addr);
         }
 
         for (self.systems) |system| {
             const system_addr = @intFromPtr(system);
-            try app.systems.append(system_addr);
+            try app.systems.append(app.allocator, system_addr);
         }
     }
 };
@@ -40,8 +40,10 @@ const SystemAddr = usize;
 allocator: std.mem.Allocator,
 registry: ecs.Registry,
 
-deinit_systems: std.ArrayList(SystemAddr),
-systems: std.ArrayList(SystemAddr),
+deinit_systems: std.ArrayListUnmanaged(SystemAddr) = std.ArrayListUnmanaged(SystemAddr){},
+systems: std.ArrayListUnmanaged(SystemAddr) = std.ArrayListUnmanaged(SystemAddr){},
+
+tags: std.StringArrayHashMapUnmanaged(std.ArrayListUnmanaged(ecs.Entity)) = std.StringArrayHashMapUnmanaged(std.ArrayListUnmanaged(ecs.Entity)){},
 
 is_exit: bool = false,
 
@@ -49,9 +51,6 @@ pub fn init(allocator: std.mem.Allocator, plugin: Plugin) !Self {
     var self = Self{
         .allocator = allocator,
         .registry = try ecs.Registry.init(allocator),
-
-        .deinit_systems = std.ArrayList(SystemAddr).init(allocator),
-        .systems = std.ArrayList(SystemAddr).init(allocator),
     };
 
     try plugin.load(&self);
@@ -60,8 +59,14 @@ pub fn init(allocator: std.mem.Allocator, plugin: Plugin) !Self {
 }
 
 pub fn deinit(self: *Self) void {
-    self.systems.deinit();
-    self.deinit_systems.deinit();
+    for (self.tags.values()) |*entity_list| {
+        entity_list.deinit(self.allocator);
+    }
+
+    self.tags.deinit(self.allocator);
+
+    self.systems.deinit(self.allocator);
+    self.deinit_systems.deinit(self.allocator);
 
     self.registry.deinit();
 }
@@ -84,4 +89,48 @@ pub fn run(self: *Self) !void {
 
 pub inline fn exit(self: *Self) void {
     self.is_exit = true;
+}
+
+pub fn spawn(self: *Self) ecs.Entity {
+    return self.registry.spawn();
+}
+
+pub fn get(self: Self, entity: ecs.Entity, comptime Component: type) ?Component {
+    return self.registry.get(entity, Component);
+}
+
+pub fn getPtr(self: Self, entity: ecs.Entity, comptime Component: type) ?*Component {
+    return self.registry.getPtr(entity, Component);
+}
+
+pub fn add(self: *Self, entity: ecs.Entity, component: anytype) !void {
+    try self.registry.add(entity, component);
+}
+
+pub fn query(self: Self, comptime includes: anytype, comptime excludes: anytype) ecs.Query(includes, excludes) {
+    return self.registry.query(includes, excludes);
+}
+
+pub fn getFistByTag(self: Self, tag: []const u8) ?ecs.Entity {
+    if (!self.tags.contains(tag)) {
+        return null;
+    }
+
+    const entity_list = self.tags.get(tag).?;
+
+    if (entity_list.items.len == 0) {
+        return null;
+    }
+
+    return entity_list.items[0];
+}
+
+pub fn addTag(self: *Self, entity: ecs.Entity, tag: []const u8) !void {
+    if (!self.tags.contains(tag)) {
+        const entity_list = std.ArrayListUnmanaged(ecs.Entity){};
+        try self.tags.put(self.allocator, tag, entity_list);
+    }
+
+    const entity_list = self.tags.getPtr(tag).?;
+    try entity_list.append(self.allocator, entity);
 }
