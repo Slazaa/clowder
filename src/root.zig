@@ -16,6 +16,8 @@ pub const Plugin = App.Plugin;
 pub const component = @import("component.zig");
 pub const plugin = @import("plugin.zig");
 
+pub const Mesh = component.Mesh;
+
 pub const default_plugin = Plugin{
     .plugins = &.{
         plugin.default_window.plugin,

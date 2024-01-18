@@ -2,6 +2,7 @@ const builtin = @import("builtin");
 const std = @import("std");
 
 const clw_window = @import("../clowder_window/build.zig");
+const clw_math = @import("../clowder_math/build.zig");
 
 var module: ?*std.Build.Module = null;
 
@@ -43,6 +44,10 @@ pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
             .{
                 .name = "clowder_window",
                 .module = clw_window.link(b, step),
+            },
+            .{
+                .name = "clowder_math",
+                .module = clw_math.link(b, step),
             },
         },
     });

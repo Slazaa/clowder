@@ -22,13 +22,26 @@ fn windowCallback(h_wnd: nat.HWND, msg: nat.UINT, w_param: nat.WPARAM, l_param: 
     return 0;
 }
 
+pub const Config = packed struct {
+    resizable: bool = false,
+    maximize_box: bool = false,
+    minimize_box: bool = true,
+};
+
 pub const Base = struct {
     const Self = @This();
 
     handle: nat.HWND,
     device_context: nat.HDC,
 
-    pub fn init(title: [:0]const u8, x: i32, y: i32, width: u32, height: u32) Error!Self {
+    pub fn init(
+        title: [:0]const u8,
+        x: i32,
+        y: i32,
+        width: u32,
+        height: u32,
+        config: Config,
+    ) Error!Self {
         const instance = nat.GetModuleHandleA(null) orelse {
             return error.CouldNotGetInstance;
         };
@@ -46,11 +59,17 @@ pub const Base = struct {
             return error.CouldNotRegisterClass;
         }
 
+        var flags: nat.DWORD = nat.WS_OVERLAPPED | nat.WS_SYSMENU;
+
+        if (config.resizable) flags |= nat.WS_THICKFRAME;
+        if (config.maximize_box) flags |= nat.WS_MAXIMIZEBOX;
+        if (config.minimize_box) flags |= nat.WS_MINIMIZEBOX;
+
         const window = nat.CreateWindowExA(
             0,
             window_class.lpszClassName,
             title,
-            nat.WS_OVERLAPPEDWINDOW,
+            flags,
             x,
             y,
             @intCast(width),

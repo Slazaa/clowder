@@ -23,6 +23,12 @@ pub const default_backend: Backend = switch (builtin.os.tag) {
     else => @compileError("OS not supported"),
 };
 
+pub const Config = packed struct {
+    resizable: bool = false,
+    maximize_box: bool = false,
+    minimize_box: bool = true,
+};
+
 /// Represents a window.
 pub fn Window(comptime backend: Backend) type {
     return struct {
@@ -51,6 +57,7 @@ pub fn Window(comptime backend: Backend) type {
             title: [:0]const u8,
             position: WindowPos,
             size: clw_math.Vec2u,
+            config: Config,
         ) Error!Self {
             const position_vec = switch (position) {
                 .center => @as(clw_math.Vec2i, @intCast(screen.getSize(.primary) - size)) /
@@ -58,8 +65,10 @@ pub fn Window(comptime backend: Backend) type {
                 .at => |at| at,
             };
 
+            const base_config: base.Config = @bitCast(config);
+
             return .{
-                .base = try Base.init(title, position_vec[0], position_vec[1], size[0], size[1]),
+                .base = try Base.init(title, position_vec[0], position_vec[1], size[0], size[1], base_config),
                 .events = std.ArrayList(Event).init(allocator),
             };
         }

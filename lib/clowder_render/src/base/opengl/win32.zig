@@ -20,16 +20,40 @@ pub const Error = Window.Error || error{
     CouldNotLoadExtension,
     CouldNotCreateContext,
     CouldNotMakeContextCurrent,
+    CouldNotCompileShader,
 };
+
+pub const RenderObject = opengl.RenderObject;
 
 var wglChoosePixelFormatARB: nat.PFNWGLCHOOSEPIXELFORMATARBPROC = undefined;
 var wglCreateContextAttribsARB: nat.PFNWGLCREATECONTEXTATTRIBSARBPROC = undefined;
 var wglGetExtensionsStringARB: nat.PFNWGLGETEXTENSIONSSTRINGARBPROC = undefined;
 
+const default_vertex_shader =
+    \\#version 400
+    \\
+    \\in vec3 position;
+    \\
+    \\void main() {
+    \\    gl_Position = vec4(position, 1.0);
+    \\}
+;
+
+const default_fragment_shader =
+    \\#version 400
+    \\
+    \\out vec4 frag_color;
+    \\
+    \\void main() {
+    \\    frag_color = vec4(0.5, 0.0, 0.5, 1.0);
+    \\}
+;
+
 pub const Base = struct {
     const Self = @This();
 
     context: win_nat.HGLRC,
+    shader_program: nat.GLuint,
 
     fn initExtensions() Error!void {
         const window = win_nat.CreateWindowExA(
@@ -167,12 +191,26 @@ pub const Base = struct {
             return error.CouldNotMakeContextCurrent;
         }
 
+        nat.glEnable(nat.GL_DEPTH_TEST);
+        nat.glDepthFunc(nat.GL_LESS);
+
         return context;
     }
 
-    pub fn init(window_context: Window.Context) Error!Self {
+    pub fn init(window_context: Window.Context, shader_report: ?*std.ArrayList(u8)) !Self {
+        const context = try initContenxt(window_context.base.device_context);
+
+        nat.load(@ptrCast(&win_nat.wglGetProcAddress));
+
+        const shader_program = try opengl.initShaderProgram(
+            default_vertex_shader,
+            default_fragment_shader,
+            shader_report,
+        );
+
         return .{
-            .context = try initContenxt(window_context.base.device_context),
+            .context = context,
+            .shader_program = shader_program,
         };
     }
 
@@ -184,5 +222,9 @@ pub const Base = struct {
 
     pub fn swap(window_context: Window.Context) void {
         _ = win_nat.SwapBuffers(window_context.base.device_context);
+    }
+
+    pub fn render(render_object: opengl.RenderObject) void {
+        opengl.render(render_object);
     }
 };

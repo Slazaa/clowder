@@ -54,7 +54,7 @@ fn register(self: *Self, comptime Component: type) !void {
     try self.storages.put(self.allocator, getComponentId(Component), @intFromPtr(storage));
 }
 
-fn getStorage(self: Self, comptime Component: type) !*Storage(Component) {
+pub fn getStorage(self: Self, comptime Component: type) !*Storage(Component) {
     const component_id = getComponentId(Component);
 
     const storage_addr = self.storages.get(component_id) orelse {
@@ -72,6 +72,14 @@ pub fn spawn(self: *Self) Entity {
     return entity;
 }
 
+/// Despawns `entity`.
+pub fn despawn(self: Self, entity: Entity) void {
+    for (self.storages.values()) |storage_addr| {
+        const storage: *Storage(u1) = @ptrFromInt(storage_addr);
+        _ = storage.remove(entity);
+    }
+}
+
 /// Returns `true` if `Component` is registered.
 /// Else returns `false`.
 pub fn isRegistered(self: Self, comptime Component: type) bool {
@@ -80,7 +88,7 @@ pub fn isRegistered(self: Self, comptime Component: type) bool {
 
 /// Returns `true` if `entity` has `Component`.
 /// Else returns `false`.
-pub fn has(self: Self, entity: Entity, comptime Component: type) bool {
+pub fn hasComponent(self: Self, entity: Entity, comptime Component: type) bool {
     const storage = self.getStorage(Component) catch {
         return false;
     };
@@ -89,7 +97,7 @@ pub fn has(self: Self, entity: Entity, comptime Component: type) bool {
 }
 
 /// Returns the `Component` of `entity`.
-pub fn get(self: Self, entity: Entity, comptime Component: type) ?Component {
+pub fn getComponent(self: Self, entity: Entity, comptime Component: type) ?Component {
     const storage = self.getStorage(Component) catch {
         return null;
     };
@@ -98,7 +106,7 @@ pub fn get(self: Self, entity: Entity, comptime Component: type) ?Component {
 }
 
 /// Returns a pointer to the `Component` of `entity`.
-pub fn getPtr(self: Self, entity: Entity, comptime Component: type) ?*Component {
+pub fn getComponentPtr(self: Self, entity: Entity, comptime Component: type) ?*Component {
     const storage = self.getStorage(Component) catch {
         return null;
     };
@@ -107,7 +115,7 @@ pub fn getPtr(self: Self, entity: Entity, comptime Component: type) ?*Component 
 }
 
 /// Adds `component` to `entity`.
-pub fn add(self: *Self, entity: Entity, component: anytype) !void {
+pub fn addComponent(self: *Self, entity: Entity, component: anytype) !void {
     const Component = @TypeOf(component);
 
     if (!self.isRegistered(Component)) {

@@ -1,1 +1,1 @@
-pub const Mesh = @import("component/Mesh.zig");
+pub const Mesh = @import("component/mesh.zig").Mesh;

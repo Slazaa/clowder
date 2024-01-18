@@ -10,15 +10,16 @@ pub fn initSystem(app: *root.App) !void {
         "Clowder Window",
         .center,
         .{ 800, 600 },
+        .{},
     );
 
     errdefer window.deinit();
 
-    const renderer = try root.Renderer(.{}).init(window.context());
+    const renderer = try root.Renderer(.{}).init(window.context(), null);
     errdefer renderer.deinit();
 
-    try app.add(main_window, window);
-    try app.add(main_window, renderer);
+    try app.addComponent(main_window, window);
+    try app.addComponent(main_window, renderer);
 
     try app.addTag(main_window, "main_window");
 }
@@ -26,8 +27,17 @@ pub fn initSystem(app: *root.App) !void {
 pub fn deinitSystem(app: *root.App) void {
     const main_window = app.getFirstByTag("main_window") orelse return;
 
-    const window = app.get(main_window, root.DefaultWindow).?;
-    const renderer = app.get(main_window, root.Renderer(.{})).?;
+    const window = app.getComponent(main_window, root.DefaultWindow).?;
+    const renderer = app.getComponent(main_window, root.Renderer(.{})).?;
+
+    {
+        var query = app.query(.{root.Mesh(.{})}, .{});
+
+        while (query.next()) |entity| {
+            const mesh = app.getComponent(entity, root.Mesh(.{})).?;
+            mesh.deinit();
+        }
+    }
 
     window.deinit();
     renderer.deinit();
@@ -36,8 +46,8 @@ pub fn deinitSystem(app: *root.App) void {
 pub fn system(app: *root.App) !void {
     const main_window = app.getFirstByTag("main_window") orelse return;
 
-    const window = app.getPtr(main_window, root.DefaultWindow).?;
-    const renderer = app.get(main_window, root.Renderer(.{})).?;
+    const window = app.getComponentPtr(main_window, root.DefaultWindow).?;
+    const renderer = app.getComponent(main_window, root.Renderer(.{})).?;
 
     try window.update();
 
@@ -46,6 +56,15 @@ pub fn system(app: *root.App) !void {
     }
 
     renderer.clear(root.Color.black);
+
+    {
+        var query = app.query(.{root.Mesh(.{})}, .{});
+
+        while (query.next()) |entity| {
+            const mesh = app.getComponent(entity, root.Mesh(.{})).?;
+            renderer.render(mesh.render_object);
+        }
+    }
 
     renderer.swap();
 }

@@ -101,19 +101,35 @@ pub fn spawn(self: *Self) ecs.Entity {
     return self.registry.spawn();
 }
 
+/// Despawns `entity`.
+pub fn despawn(self: Self, entity: ecs.Entity) void {
+    self.registry.despawn(entity);
+
+    for (self.tags.values()) |*entity_list| {
+        for (0..entity_list.items.len) |i| {
+            if (entity_list.items[i] != entity) {
+                continue;
+            }
+
+            _ = entity_list.swapRemove(i);
+            break;
+        }
+    }
+}
+
 /// Returns the `Component` of `entity`.
-pub fn get(self: Self, entity: ecs.Entity, comptime Component: type) ?Component {
-    return self.registry.get(entity, Component);
+pub fn getComponent(self: Self, entity: ecs.Entity, comptime Component: type) ?Component {
+    return self.registry.getComponent(entity, Component);
 }
 
 /// Returns a pointer to the `Component` of `entity`.
-pub fn getPtr(self: Self, entity: ecs.Entity, comptime Component: type) ?*Component {
-    return self.registry.getPtr(entity, Component);
+pub fn getComponentPtr(self: Self, entity: ecs.Entity, comptime Component: type) ?*Component {
+    return self.registry.getComponentPtr(entity, Component);
 }
 
 /// Adds `component` to `entity`.
-pub fn add(self: *Self, entity: ecs.Entity, component: anytype) !void {
-    try self.registry.add(entity, component);
+pub fn addComponent(self: *Self, entity: ecs.Entity, component: anytype) !void {
+    try self.registry.addComponent(entity, component);
 }
 
 /// Returns a `Query` that filters entities depending on the components
