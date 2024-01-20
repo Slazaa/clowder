@@ -14,16 +14,22 @@ pub const RenderObject = struct {
     vertex_array_object: nat.GLuint,
 
     pub fn init(vertices: []const math.Vertex) Self {
-        var vertex_buffer_object: nat.GLuint = undefined;
-
-        nat.glGenBuffers(1, &vertex_buffer_object);
-        nat.glBindBuffer(nat.GL_ARRAY_BUFFER, vertex_buffer_object);
-        nat.glBufferData(nat.GL_ARRAY_BUFFER, @sizeOf(nat.GLfloat) * 9, vertices, nat.GL_STATIC_DRAW);
-
         var vertex_arry_object: nat.GLuint = undefined;
 
-        nat.glGenVertexArrays(1, &vertex_arry_object);
+        nat.glGenVertexArrays(1, @ptrCast(&vertex_arry_object));
         nat.glBindVertexArray(vertex_arry_object);
+
+        var vertex_buffer_object: nat.GLuint = undefined;
+
+        nat.glGenBuffers(1, @ptrCast(&vertex_buffer_object));
+        nat.glBindBuffer(nat.GL_ARRAY_BUFFER, vertex_buffer_object);
+
+        nat.glBufferData(
+            nat.GL_ARRAY_BUFFER,
+            @intCast(@sizeOf(math.Vertex) * vertices.len),
+            @ptrCast(vertices),
+            nat.GL_STATIC_DRAW,
+        );
 
         nat.glEnableVertexAttribArray(0);
         nat.glVertexAttribPointer(0, 3, nat.GL_FLOAT, nat.GL_FALSE, 0, null);
@@ -69,15 +75,16 @@ pub fn initShaderProgram(
     frag_source: [:0]const u8,
     shader_report: ?*std.ArrayList(u8),
 ) !nat.GLuint {
+    const shader_program = nat.glCreateProgram();
+
     const vert_shader = try initShader(nat.GL_VERTEX_SHADER, vert_source, shader_report);
     const frag_shader = try initShader(nat.GL_FRAGMENT_SHADER, frag_source, shader_report);
-
-    const shader_program = nat.glCreateProgram();
 
     nat.glAttachShader(shader_program, vert_shader);
     nat.glAttachShader(shader_program, frag_shader);
 
     nat.glLinkProgram(shader_program);
+    nat.glValidateProgram(shader_program);
 
     nat.glUseProgram(shader_program);
 
@@ -85,6 +92,11 @@ pub fn initShaderProgram(
 }
 
 pub fn clear(color: Color) void {
+    // nat.glDisable(nat.GL_DEPTH_TEST);
+    // nat.glDisable(nat.GL_CULL_FACE);
+
+    // nat.glViewport(0, 0, 800, 600);
+
     nat.glClearColor(color.red, color.green, color.blue, color.alpha);
     nat.glClear(nat.GL_COLOR_BUFFER_BIT | nat.GL_DEPTH_BUFFER_BIT | nat.GL_STENCIL_BUFFER_BIT);
 }

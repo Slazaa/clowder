@@ -12,7 +12,7 @@ pub fn Mesh(comptime config: render.RendererConfig) type {
         vertices: std.ArrayList(math.Vertex),
         render_object: Renderer.RenderObject,
 
-        pub fn init(allocator: std.mem.Allocator, vertices: []const math.Vertex) Self {
+        pub fn init(allocator: std.mem.Allocator, vertices: []const math.Vertex) !Self {
             var vertices_list = std.ArrayList(math.Vertex).init(allocator);
             errdefer vertices_list.deinit();
 

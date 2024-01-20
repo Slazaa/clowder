@@ -35,17 +35,17 @@ const default_vertex_shader =
     \\in vec3 position;
     \\
     \\void main() {
-    \\    gl_Position = vec4(position, 1.0);
+    \\    gl_Position = vec4(position, 1.0f);
     \\}
 ;
 
 const default_fragment_shader =
     \\#version 400
     \\
-    \\out vec4 frag_color;
+    \\out vec4 color;
     \\
     \\void main() {
-    \\    frag_color = vec4(0.5, 0.0, 0.5, 1.0);
+    \\    color = vec4(0.5f, 0.0f, 0.5f, 1.0f);
     \\}
 ;
 

@@ -1,9 +1,9 @@
 const std = @import("std");
 
-const clw_ecs = @import("lib/clowder_ecs/build.zig");
-const clw_math = @import("lib/clowder_math/build.zig");
-const clw_render = @import("lib/clowder_render/build.zig");
-const clw_window = @import("lib/clowder_window/build.zig");
+const clw_ecs = @import("core/clowder_ecs/build.zig");
+const clw_math = @import("core/clowder_math/build.zig");
+const clw_render = @import("core/clowder_render/build.zig");
+const clw_window = @import("core/clowder_window/build.zig");
 
 const triangle = @import("examples/triangle/build.zig");
 

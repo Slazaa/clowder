@@ -30,6 +30,9 @@ pub fn deinitSystem(app: *root.App) void {
     const window = app.getComponent(main_window, root.DefaultWindow).?;
     const renderer = app.getComponent(main_window, root.Renderer(.{})).?;
 
+    window.deinit();
+    renderer.deinit();
+
     {
         var query = app.query(.{root.Mesh(.{})}, .{});
 
@@ -38,9 +41,6 @@ pub fn deinitSystem(app: *root.App) void {
             mesh.deinit();
         }
     }
-
-    window.deinit();
-    renderer.deinit();
 }
 
 pub fn system(app: *root.App) !void {
