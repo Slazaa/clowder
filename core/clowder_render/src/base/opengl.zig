@@ -86,16 +86,11 @@ pub fn initShaderProgram(
     nat.glLinkProgram(shader_program);
     nat.glValidateProgram(shader_program);
 
-    nat.glUseProgram(shader_program);
-
     return shader_program;
 }
 
-pub fn clear(color: Color) void {
-    // nat.glDisable(nat.GL_DEPTH_TEST);
-    // nat.glDisable(nat.GL_CULL_FACE);
-
-    // nat.glViewport(0, 0, 800, 600);
+pub fn clear(color: Color, window_size: math.Vec2u) void {
+    nat.glViewport(0, 0, @intCast(window_size[0]), @intCast(window_size[1]));
 
     nat.glClearColor(color.red, color.green, color.blue, color.alpha);
     nat.glClear(nat.GL_COLOR_BUFFER_BIT | nat.GL_DEPTH_BUFFER_BIT | nat.GL_STENCIL_BUFFER_BIT);

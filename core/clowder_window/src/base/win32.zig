@@ -2,6 +2,8 @@ const std = @import("std");
 
 const nat = @import("../native/win32.zig");
 
+const math = @import("clowder_math");
+
 const Window = @import("../window.zig");
 
 const Event = Window.Event;
@@ -96,6 +98,13 @@ pub const Base = struct {
     pub fn deinit(self: Self) void {
         _ = nat.ReleaseDC(self.handle, self.device_context);
         _ = nat.DestroyWindow(self.handle);
+    }
+
+    pub fn getSize(self: Self) math.Vec2u {
+        var rect: nat.RECT = undefined;
+        _ = nat.GetWindowRect(self.handle, &rect);
+
+        return .{ @intCast(rect.right - rect.left), @intCast(rect.bottom - rect.top) };
     }
 
     pub fn pollEvent(_: Self) ?Event {

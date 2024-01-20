@@ -1,3 +1,5 @@
+const builtin = @import("builtin");
+
 const cwl_window = @import("clowder_window");
 
 const win_nat = cwl_window.native;
@@ -79,7 +81,7 @@ pub var glCompileShader: PFNGLCOMPILESHADERARBPROC = undefined;
 pub var glCreateProgram: PFNGLCREATEPROGRAMPROC = undefined;
 pub var glCreateShader: PFNGLCREATESHADERPROC = undefined;
 pub var glDeleteShader: PFNGLDELETESHADERPROC = undefined;
-// pub var glDisable: PFNGLDISABLEPROC = undefined;
+pub var glDisable: PFNGLDISABLEPROC = undefined;
 pub var glEnableVertexAttribArray: PFNGLENABLEVERTEXATTRIBARRAYPROC = undefined;
 pub var glGenBuffers: PFNGLGENBUFFERSPROC = undefined;
 pub var glGenVertexArrays: PFNGLGENVERTEXARRAYSPROC = undefined;
@@ -90,7 +92,7 @@ pub var glShaderSource: PFNGLSHADERSOURCEPROC = undefined;
 pub var glUseProgram: PFNGLUSEPROGRAMPROC = undefined;
 pub var glValidateProgram: PFNGLVALIDATEPROGRAMPROC = undefined;
 pub var glVertexAttribPointer: PFNGLVERTEXATTRIBPOINTERPROC = undefined;
-// pub var glViewport: PFNGLVIEWPORTPROC = undefined;
+pub var glViewport: PFNGLVIEWPORTPROC = undefined;
 
 pub fn load(loader: Loader) void {
     glAttachShader = @ptrCast(loader("glAttachShader"));
@@ -101,7 +103,6 @@ pub fn load(loader: Loader) void {
     glCreateProgram = @ptrCast(loader("glCreateProgram"));
     glCreateShader = @ptrCast(loader("glCreateShader"));
     glDeleteShader = @ptrCast(loader("glDeleteShader"));
-    // glDisable = @ptrCast(loader("glDisable"));
     glEnableVertexAttribArray = @ptrCast(loader("glEnableVertexAttribArray"));
     glGenBuffers = @ptrCast(loader("glGenBuffers"));
     glGenVertexArrays = @ptrCast(loader("glGenVertexArrays"));
@@ -112,5 +113,19 @@ pub fn load(loader: Loader) void {
     glUseProgram = @ptrCast(loader("glUseProgram"));
     glValidateProgram = @ptrCast(loader("glValidateProgram"));
     glVertexAttribPointer = @ptrCast(loader("glVertexAttribPointer"));
-    // glViewport = @ptrCast(loader("glViewport"));
+
+    switch (builtin.os.tag) {
+        .windows => loadWin32(),
+        else => {
+            glDisable = @ptrCast(loader("glDisable"));
+            glViewport = @ptrCast(loader("glViewport"));
+        },
+    }
+}
+
+pub fn loadWin32() void {
+    const module = win_nat.LoadLibraryA("OpenGL32.dll");
+
+    glDisable = @ptrCast(win_nat.GetProcAddress(module, "glDisable"));
+    glViewport = @ptrCast(win_nat.GetProcAddress(module, "glViewport"));
 }

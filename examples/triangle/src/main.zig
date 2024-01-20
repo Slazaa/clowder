@@ -8,9 +8,9 @@ pub fn initSystem(app: *clw.App) !void {
     try app.addComponent(triangle, try clw.Mesh(.{}).init(
         app.allocator,
         &.{
-            .{ 0.0, 0.5, 0.0 },
-            .{ 0.5, -0.5, 0.0 },
-            .{ -0.5, -0.5, 0.0 },
+            .{ -0.8, -0.8, 0.0 },
+            .{ 0.8, -0.8, 0.0 },
+            .{ 0.0, 0.8, 0.0 },
         },
     ));
 }

@@ -72,8 +72,8 @@ pub fn Renderer(comptime config: Config) type {
         }
 
         /// Clears the `Renderer` with `color`.
-        pub fn clear(_: Self, color: Color) void {
-            Base.clear(color);
+        pub fn clear(self: Self, color: Color) void {
+            self.backend_base.clear(color);
         }
 
         /// Swaps the buffers.

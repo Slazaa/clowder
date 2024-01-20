@@ -30,17 +30,17 @@ var wglCreateContextAttribsARB: nat.PFNWGLCREATECONTEXTATTRIBSARBPROC = undefine
 var wglGetExtensionsStringARB: nat.PFNWGLGETEXTENSIONSSTRINGARBPROC = undefined;
 
 const default_vertex_shader =
-    \\#version 400
+    \\#version 400 core
     \\
-    \\in vec3 position;
+    \\layout(location = 0) in vec4 position;
     \\
     \\void main() {
-    \\    gl_Position = vec4(position, 1.0f);
+    \\    gl_Position = position;
     \\}
 ;
 
 const default_fragment_shader =
-    \\#version 400
+    \\#version 400 core
     \\
     \\out vec4 color;
     \\
@@ -52,6 +52,7 @@ const default_fragment_shader =
 pub const Base = struct {
     const Self = @This();
 
+    window_context: Window.Context,
     context: win_nat.HGLRC,
     shader_program: nat.GLuint,
 
@@ -159,20 +160,20 @@ pub const Base = struct {
             0,
         };
 
-        var pixel_formats: [1]c_int = undefined;
+        var pixel_format: c_int = undefined;
         var num_formats: win_nat.UINT = undefined;
 
-        if (wglChoosePixelFormatARB(device_context, &pixel_format_attribs, null, 1, &pixel_formats, &num_formats) == win_nat.FALSE or num_formats == 0) {
+        if (wglChoosePixelFormatARB(device_context, &pixel_format_attribs, null, 1, @ptrCast(&pixel_format), &num_formats) == win_nat.FALSE or num_formats == 0) {
             return error.CouldNotChoosePixelFormat;
         }
 
         var pixel_format_desc: win_nat.PIXELFORMATDESCRIPTOR = undefined;
 
-        if (win_nat.DescribePixelFormat(device_context, pixel_formats[0], @sizeOf(win_nat.PIXELFORMATDESCRIPTOR), &pixel_format_desc) == 0) {
+        if (win_nat.DescribePixelFormat(device_context, pixel_format, @sizeOf(win_nat.PIXELFORMATDESCRIPTOR), &pixel_format_desc) == 0) {
             return error.CouldNotDescribePixelFormat;
         }
 
-        if (win_nat.SetPixelFormat(device_context, pixel_formats[0], &pixel_format_desc) == win_nat.FALSE) {
+        if (win_nat.SetPixelFormat(device_context, pixel_format, &pixel_format_desc) == win_nat.FALSE) {
             return error.CouldNotSetPixelFormat;
         }
 
@@ -208,7 +209,10 @@ pub const Base = struct {
             shader_report,
         );
 
+        nat.glUseProgram(shader_program);
+
         return .{
+            .window_context = window_context,
             .context = context,
             .shader_program = shader_program,
         };
@@ -216,8 +220,8 @@ pub const Base = struct {
 
     pub fn deinit(_: Self) void {}
 
-    pub fn clear(color: Color) void {
-        opengl.clear(color);
+    pub fn clear(self: Self, color: Color) void {
+        opengl.clear(color, self.window_context.base.getSize());
     }
 
     pub fn swap(window_context: Window.Context) void {

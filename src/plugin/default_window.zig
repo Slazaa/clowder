@@ -55,7 +55,7 @@ pub fn system(app: *root.App) !void {
         app.exit();
     }
 
-    renderer.clear(root.Color.black);
+    renderer.clear(root.Color.rgb(0.1, 0.1, 0.1));
 
     {
         var query = app.query(.{root.Mesh(.{})}, .{});

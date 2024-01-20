@@ -57,6 +57,7 @@ pub const ATOM = WORD;
 pub const BOOL = c_int;
 pub const BYTE = u8;
 pub const DWORD = c_ulong;
+pub const FARPROC = PROC;
 pub const FLOAT = f32;
 pub const HANDLE = PVOID;
 pub const HBRUSH = HANDLE;
@@ -113,6 +114,18 @@ pub const MSG = struct_tagMSG;
 pub const PMSG = *struct_tagMSG;
 pub const NPMSG = *struct_tagMSG;
 pub const LPMSG = *struct_tagMSG;
+
+pub const struct_tagRECT = extern struct {
+    left: LONG,
+    top: LONG,
+    right: LONG,
+    bottom: LONG,
+};
+
+pub const RECT = struct_tagRECT;
+pub const PRECT = *struct_tagRECT;
+pub const NPRECT = *struct_tagRECT;
+pub const LPRECT = *struct_tagRECT;
 
 pub const struct_tagPIXELFORMATDESCRIPTOR = extern struct {
     nSize: WORD,
@@ -188,8 +201,11 @@ pub extern fn DispatchMessageA(lpMsg: ?*const MSG) LRESULT;
 pub extern fn GetDC(hWnd: HWND) HDC;
 pub extern fn GetLastError() DWORD;
 pub extern fn GetModuleHandleA(lpModuleName: LPCSTR) HMODULE;
+pub extern fn GetProcAddress(hModule: HMODULE, lpProcName: LPCSTR) FARPROC;
 pub extern fn GetSystemMetrics(nIndex: c_int) c_int;
+pub extern fn GetWindowRect(hWnd: HWND, lpRect: LPRECT) BOOL;
 pub extern fn LoadCursorA(hInstance: HINSTANCE, lpCursorName: LPCSTR) HCURSOR;
+pub extern fn LoadLibraryA(lpLibFileName: LPCSTR) HMODULE;
 pub extern fn PeekMessageA(lpMsg: LPMSG, hWnd: HWND, wMsgFilterMin: UINT, wMsgFilterMax: UINT, wRemoveMsg: UINT) BOOL;
 pub extern fn PostQuitMessage(nExitCode: c_int) void;
 pub extern fn RegisterClassExA(lpWndClass: ?*const WNDCLASSEXA) ATOM;
