@@ -10,33 +10,49 @@ const Color = @import("../Color.zig");
 pub const RenderObject = struct {
     const Self = @This();
 
-    vertex_buffer_object: nat.GLuint,
-    vertex_array_object: nat.GLuint,
+    position_vbo: nat.GLuint,
+    color_vbo: nat.GLuint,
 
-    pub fn init(vertices: []const math.Vertex) Self {
-        var vertex_arry_object: nat.GLuint = undefined;
+    vao: nat.GLuint,
 
-        nat.glGenVertexArrays(1, @ptrCast(&vertex_arry_object));
-        nat.glBindVertexArray(vertex_arry_object);
+    fn initVbo(comptime T: type, data: []const T, index: usize, size: usize) nat.GLuint {
+        const gl_type = switch (T) {
+            f32 => nat.GL_FLOAT,
+            else => @compileError("Type not supported by OpenGL"),
+        };
 
-        var vertex_buffer_object: nat.GLuint = undefined;
+        var vbo: nat.GLuint = undefined;
 
-        nat.glGenBuffers(1, @ptrCast(&vertex_buffer_object));
-        nat.glBindBuffer(nat.GL_ARRAY_BUFFER, vertex_buffer_object);
+        nat.glGenBuffers(1, @ptrCast(&vbo));
+        nat.glBindBuffer(nat.GL_ARRAY_BUFFER, vbo);
 
         nat.glBufferData(
             nat.GL_ARRAY_BUFFER,
-            @intCast(@sizeOf(math.Vertex) * vertices.len),
-            @ptrCast(vertices),
+            @intCast(@sizeOf(T) * data.len),
+            @ptrCast(data),
             nat.GL_STATIC_DRAW,
         );
 
-        nat.glEnableVertexAttribArray(0);
-        nat.glVertexAttribPointer(0, 3, nat.GL_FLOAT, nat.GL_FALSE, 0, null);
+        nat.glEnableVertexAttribArray(@intCast(index));
+        nat.glVertexAttribPointer(@intCast(index), @intCast(size), gl_type, nat.GL_FALSE, 0, null);
+
+        return vbo;
+    }
+
+    pub fn init(positions: []const f32, colors: []const f32) Self {
+        var vao: nat.GLuint = undefined;
+
+        nat.glGenVertexArrays(1, @ptrCast(&vao));
+        nat.glBindVertexArray(vao);
+
+        const position_vbo = initVbo(f32, positions, 0, 3);
+        const color_vbo = initVbo(f32, colors, 1, 4);
 
         return .{
-            .vertex_buffer_object = vertex_buffer_object,
-            .vertex_array_object = vertex_arry_object,
+            .position_vbo = position_vbo,
+            .color_vbo = color_vbo,
+
+            .vao = vao,
         };
     }
 };
@@ -97,6 +113,6 @@ pub fn clear(color: Color, window_size: math.Vec2u) void {
 }
 
 pub fn render(render_object: RenderObject) void {
-    nat.glBindVertexArray(render_object.vertex_array_object);
+    nat.glBindVertexArray(render_object.position_vbo);
     nat.glDrawArrays(nat.GL_TRIANGLES, 0, 3);
 }

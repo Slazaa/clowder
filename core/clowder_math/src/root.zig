@@ -4,4 +4,4 @@ pub const vec3 = @import("vec3.zig");
 pub usingnamespace vec2;
 pub usingnamespace vec3;
 
-pub const Vertex = [3]f32;
+pub const Vertex = vec3.Vec3f;

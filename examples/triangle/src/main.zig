@@ -12,6 +12,11 @@ pub fn initSystem(app: *clw.App) !void {
             .{ 0.8, -0.8, 0.0 },
             .{ 0.0, 0.8, 0.0 },
         },
+        &.{
+            clw.Color.red,
+            clw.Color.green,
+            clw.Color.blue,
+        },
     ));
 }
 

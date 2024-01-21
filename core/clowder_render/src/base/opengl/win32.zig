@@ -29,26 +29,6 @@ var wglChoosePixelFormatARB: nat.PFNWGLCHOOSEPIXELFORMATARBPROC = undefined;
 var wglCreateContextAttribsARB: nat.PFNWGLCREATECONTEXTATTRIBSARBPROC = undefined;
 var wglGetExtensionsStringARB: nat.PFNWGLGETEXTENSIONSSTRINGARBPROC = undefined;
 
-const default_vertex_shader =
-    \\#version 400 core
-    \\
-    \\layout(location = 0) in vec4 position;
-    \\
-    \\void main() {
-    \\    gl_Position = position;
-    \\}
-;
-
-const default_fragment_shader =
-    \\#version 400 core
-    \\
-    \\out vec4 color;
-    \\
-    \\void main() {
-    \\    color = vec4(0.5f, 0.0f, 0.5f, 1.0f);
-    \\}
-;
-
 pub const Base = struct {
     const Self = @This();
 
@@ -198,14 +178,19 @@ pub const Base = struct {
         return context;
     }
 
-    pub fn init(window_context: Window.Context, shader_report: ?*std.ArrayList(u8)) !Self {
+    pub fn init(
+        window_context: Window.Context,
+        vertex_shader_source: [:0]const u8,
+        fragment_shader_source: [:0]const u8,
+        shader_report: ?*std.ArrayList(u8),
+    ) !Self {
         const context = try initContenxt(window_context.base.device_context);
 
         nat.load(@ptrCast(&win_nat.wglGetProcAddress));
 
         const shader_program = try opengl.initShaderProgram(
-            default_vertex_shader,
-            default_fragment_shader,
+            vertex_shader_source,
+            fragment_shader_source,
             shader_report,
         );
 

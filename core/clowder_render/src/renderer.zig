@@ -50,9 +50,17 @@ pub fn Renderer(comptime config: Config) type {
                 @compileError("Renderer backend does not match window backend");
             }
 
+            const vertex_shader_source = @embedFile("shader/glsl/default.vert");
+            const fragment_shader_source = @embedFile("shader/glsl/default.frag");
+
             return .{
                 .window_context = window_context,
-                .backend_base = try Base.init(window_context, shader_report),
+                .backend_base = try Base.init(
+                    window_context,
+                    vertex_shader_source,
+                    fragment_shader_source,
+                    shader_report,
+                ),
             };
         }
 
