@@ -10,8 +10,7 @@ pub fn initSystem(app: *clw.App) !void {
     const triangle = app.spawn();
 
     // Then, we add a `Mesh` component to our entity.
-    // Remember, entities are assigned components that we can then use in
-    // our systems.
+    // Remember, entities are assigned components that we can then use in our systems.
     try app.addComponent(triangle, try clw.Mesh(.{}).init(
         app.allocator,
         // We first set the vertices positions.
