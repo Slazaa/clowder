@@ -3,7 +3,7 @@ const std = @import("std");
 // Import Clowder!
 const clw = @import("clowder");
 
-// This is our init systme, it will be executed once when initalizing the `App`.
+// This is our init system, it will be called once when initalizing the `App`.
 pub fn initSystem(app: *clw.App) !void {
     // In there, we spawn a new entity, that we store in `triangle`.
     // Note that entities are just IDs and they don't hold any data.
