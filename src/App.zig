@@ -43,8 +43,6 @@ registry: ecs.Registry,
 deinit_systems: std.ArrayListUnmanaged(SystemAddr) = std.ArrayListUnmanaged(SystemAddr){},
 systems: std.ArrayListUnmanaged(SystemAddr) = std.ArrayListUnmanaged(SystemAddr){},
 
-tags: std.StringArrayHashMapUnmanaged(std.ArrayListUnmanaged(ecs.Entity)) = std.StringArrayHashMapUnmanaged(std.ArrayListUnmanaged(ecs.Entity)){},
-
 is_exit: bool = false,
 
 /// Initiliazes a new `App`.
@@ -62,12 +60,6 @@ pub fn init(allocator: std.mem.Allocator, plugin: Plugin) !Self {
 
 /// Deinitializes the `App`.
 pub fn deinit(self: *Self) void {
-    for (self.tags.values()) |*entity_list| {
-        entity_list.deinit(self.allocator);
-    }
-
-    self.tags.deinit(self.allocator);
-
     self.systems.deinit(self.allocator);
     self.deinit_systems.deinit(self.allocator);
 
@@ -136,31 +128,4 @@ pub fn addComponent(self: *Self, entity: ecs.Entity, component: anytype) !void {
 /// they have or not.
 pub fn query(self: Self, comptime includes: anytype, comptime excludes: anytype) ecs.Query(includes, excludes) {
     return self.registry.query(includes, excludes);
-}
-
-/// Returns the first `Entity` with `tag`.
-/// If none exist, returns `null`.
-pub fn getFirstByTag(self: Self, tag: []const u8) ?ecs.Entity {
-    if (!self.tags.contains(tag)) {
-        return null;
-    }
-
-    const entity_list = self.tags.get(tag).?;
-
-    if (entity_list.items.len == 0) {
-        return null;
-    }
-
-    return entity_list.items[0];
-}
-
-/// Adds `tag` to `entity`.
-pub fn addTag(self: *Self, entity: ecs.Entity, tag: []const u8) !void {
-    if (!self.tags.contains(tag)) {
-        const entity_list = std.ArrayListUnmanaged(ecs.Entity){};
-        try self.tags.put(self.allocator, tag, entity_list);
-    }
-
-    const entity_list = self.tags.getPtr(tag).?;
-    try entity_list.append(self.allocator, entity);
 }

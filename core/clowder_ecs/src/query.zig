@@ -70,10 +70,10 @@ pub fn Query(comptime includes: anytype, comptime excludes: anytype) type {
                 if (i == 0) {
                     include_base_entity_list = entity_list;
                 } else if (entity_list.len < include_base_entity_list.len) {
-                    include_entity_lists[i] = include_base_entity_list;
+                    include_entity_lists[i - 1] = include_base_entity_list;
                     include_base_entity_list = entity_list;
                 } else {
-                    include_entity_lists[i] = entity_list;
+                    include_entity_lists[i - 1] = entity_list;
                 }
             }
 
@@ -87,10 +87,10 @@ pub fn Query(comptime includes: anytype, comptime excludes: anytype) type {
                     &.{};
 
                 if (entity_list.len < exclude_base_entity_list.len) {
-                    exclude_entity_lists[i] = exclude_base_entity_list;
+                    exclude_entity_lists[i - 1] = exclude_base_entity_list;
                     exclude_base_entity_list = entity_list;
                 } else {
-                    exclude_entity_lists[i] = entity_list;
+                    exclude_entity_lists[i - 1] = entity_list;
                 }
             }
 
@@ -106,6 +106,7 @@ pub fn Query(comptime includes: anytype, comptime excludes: anytype) type {
         }
 
         /// Returns the next `Entity` in the `Query`.
+        /// NOTE: Excludes are not implemented yet.
         pub fn next(self: *Self) ?Entity {
             if (self.include_base_entity_list.len == 0 or
                 self.index >= self.include_base_entity_list.len)
@@ -115,8 +116,10 @@ pub fn Query(comptime includes: anytype, comptime excludes: anytype) type {
 
             const entity = self.include_base_entity_list[self.index];
 
-            const incl_valid = for (self.include_entity_lists) |incl_entity| {
-                if (incl_entity != entity) break false;
+            const incl_valid = for (self.include_entity_lists) |entity_list| {
+                if (!std.mem.containsAtLeast(Entity, entity_list, 1, &.{entity})) {
+                    break false;
+                }
             } else true;
 
             self.index += 1;
