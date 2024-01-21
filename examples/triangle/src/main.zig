@@ -5,12 +5,14 @@ const clw = @import("clowder");
 
 // This is our init system, it will be called once when initalizing the `App`.
 pub fn initSystem(app: *clw.App) !void {
-    // In there, we spawn a new entity, that we store in `triangle`.
+    // In there, we spawn a new entity, that represents our triangle.
     // Note that entities are just IDs and they don't hold any data.
     const triangle = app.spawn();
 
     // Then, we add a `Mesh` component to our entity.
     // Remember, entities are assigned components that we can then use in our systems.
+    // In the case of `Mesh` components, the `default_plugin` will take care of
+    // rendering them.
     try app.addComponent(triangle, try clw.Mesh(.{}).init(
         app.allocator,
         // We first set the vertices positions.
@@ -38,6 +40,8 @@ pub fn main() !void {
     // Here we create our `App`.
     var app = try clw.App.init(allocator, .{
         // We set our plugins, wich here is the default one.
+        // `default_plugin` will take care of setting up a basic window as well
+        // as a renderer and will render our `Mesh` component.
         .plugins = &.{clw.default_plugin},
         // And we add our init systems, here being `initSystem`.
         .initSystems = &.{initSystem},
