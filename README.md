@@ -38,8 +38,8 @@ our health component. For that, we need to create a system.
 
 ```zig
 fn healSystem(app: *clw.App) !void {
-    // The query will give us all the entity that respect the predicate.
-    // In this case, we're asking for all entities with a `Health` component.
+    // The query will give us all the entities that respect the predicate.
+    // In our case, we're asking for all entities with a `Health` component.
     var health_query = app.query(.{Health}, .{});
 
     // We can then iterate over our entities.
