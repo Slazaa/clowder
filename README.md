@@ -62,9 +62,9 @@ var app = try clw.App.init(allocator, .{
 });
 
 defer app.deinit();
+```
 
 That's it! That's what ECS is.
-```
 
 ## Examples
 You can run examples but writting `zig build example-<example_name>`.For
