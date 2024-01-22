@@ -56,14 +56,14 @@ fn healSystem(app: *clw.App) !void {
 
 That being done, we can add our system to the app.
 
-That's it! That's what ECS is.
-
 ```zig
 var app = try clw.App.init(allocator, .{
     .systems = &.{healSystem},
 });
 
 defer app.deinit();
+
+That's it! That's what ECS is.
 ```
 
 ## Examples
