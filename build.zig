@@ -11,11 +11,27 @@ fn thisPath(comptime suffix: []const u8) []const u8 {
     return comptime (std.fs.path.dirname(@src().file) orelse ".") ++ suffix;
 }
 
-fn install(b: *std.Build, step: *std.Build.Step.Compile, comptime name: []const u8) void {
-    const install_step = b.step(name, "Build '" ++ name ++ "' demo");
+fn install(b: *std.Build, step: *std.Build.Step.Compile, name: []const u8) !void {
+    const name_fmt = "example-{s}";
+    const install_desc_fmt = "Build '{s}' example";
+    const run_desc_fmt = "Run '{s}' example";
+
+    var name_buf = try std.ArrayList(u8).initCapacity(b.allocator, std.fmt.count(name_fmt, .{name}));
+    var install_desc_buf = try std.ArrayList(u8).initCapacity(b.allocator, std.fmt.count(install_desc_fmt, .{name}));
+    var run_desc_buf = try std.ArrayList(u8).initCapacity(b.allocator, std.fmt.count(run_desc_fmt, .{name}));
+
+    name_buf.expandToCapacity();
+    install_desc_buf.expandToCapacity();
+    run_desc_buf.expandToCapacity();
+
+    const full_name = try std.fmt.bufPrint(name_buf.items, name_fmt, .{name});
+    const install_desc = try std.fmt.bufPrint(install_desc_buf.items, install_desc_fmt, .{name});
+    const run_desc = try std.fmt.bufPrint(run_desc_buf.items, run_desc_fmt, .{name});
+
+    const install_step = b.step(name, install_desc);
     install_step.dependOn(&b.addInstallArtifact(step, .{}).step);
 
-    const run_step = b.step("example-" ++ name, "Run '" ++ name ++ "' demo");
+    const run_step = b.step(full_name, run_desc);
     const run_cmd = b.addRunArtifact(step);
     run_cmd.step.dependOn(install_step);
     run_step.dependOn(&run_cmd.step);
@@ -23,7 +39,7 @@ fn install(b: *std.Build, step: *std.Build.Step.Compile, comptime name: []const 
     b.getInstallStep().dependOn(install_step);
 }
 
-pub fn build(b: *std.Build) void {
+pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
@@ -38,7 +54,16 @@ pub fn build(b: *std.Build) void {
 
     b.installArtifact(lib);
 
-    install(b, triangle.build(b, target, optimize), "triangle");
+    const examples_dir = try std.fs.cwd().openDir("examples", .{ .iterate = true });
+    var examples_dir_iter = examples_dir.iterate();
+
+    while (try examples_dir_iter.next()) |entry| {
+        if (entry.kind != .directory) {
+            continue;
+        }
+
+        try install(b, triangle.build(b, target, optimize), entry.name);
+    }
 }
 
 pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
