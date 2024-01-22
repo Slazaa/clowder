@@ -4,7 +4,7 @@ const clw = @import("../../build.zig");
 
 pub fn build(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) !void {
     const exe = b.addExecutable(.{
-        .name = "triangle",
+        .name = "cube",
         .root_source_file = .{ .path = "/src/main.zig" },
         .target = target,
         .optimize = optimize,

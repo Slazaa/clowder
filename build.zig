@@ -5,34 +5,68 @@ const clw_math = @import("core/clowder_math/build.zig");
 const clw_render = @import("core/clowder_render/build.zig");
 const clw_window = @import("core/clowder_window/build.zig");
 
-const triangle = @import("examples/triangle/build.zig");
-
 fn thisPath(comptime suffix: []const u8) []const u8 {
-    return comptime (std.fs.path.dirname(@src().file) orelse ".") ++ suffix;
+    return comptime (std.fs.path.dirname(@src().file) orelse ".") ++ "/" ++ suffix;
 }
 
-fn install(b: *std.Build, step: *std.Build.Step.Compile, name: []const u8) !void {
-    const name_fmt = "example-{s}";
+fn install(
+    b: *std.Build,
+    target: std.Build.ResolvedTarget,
+    optimize: std.builtin.OptimizeMode,
+    name: []const u8,
+) !void {
+    const install_name_fmt = "install-example-{s}";
+    const run_name_fmt = "example-{s}";
     const install_desc_fmt = "Build '{s}' example";
     const run_desc_fmt = "Run '{s}' example";
 
-    var name_buf = try std.ArrayList(u8).initCapacity(b.allocator, std.fmt.count(name_fmt, .{name}));
-    var install_desc_buf = try std.ArrayList(u8).initCapacity(b.allocator, std.fmt.count(install_desc_fmt, .{name}));
-    var run_desc_buf = try std.ArrayList(u8).initCapacity(b.allocator, std.fmt.count(run_desc_fmt, .{name}));
+    var install_name_buf = try std.ArrayList(u8).initCapacity(b.allocator, std.fmt.count(install_name_fmt, .{name}));
+    errdefer install_name_buf.deinit();
 
-    name_buf.expandToCapacity();
+    var run_name_buf = try std.ArrayList(u8).initCapacity(b.allocator, std.fmt.count(run_name_fmt, .{name}));
+    errdefer run_name_buf.deinit();
+
+    var install_desc_buf = try std.ArrayList(u8).initCapacity(b.allocator, std.fmt.count(install_desc_fmt, .{name}));
+    errdefer install_desc_buf.deinit();
+
+    var run_desc_buf = try std.ArrayList(u8).initCapacity(b.allocator, std.fmt.count(run_desc_fmt, .{name}));
+    errdefer run_desc_buf.deinit();
+
+    install_name_buf.expandToCapacity();
+    run_name_buf.expandToCapacity();
     install_desc_buf.expandToCapacity();
     run_desc_buf.expandToCapacity();
 
-    const full_name = try std.fmt.bufPrint(name_buf.items, name_fmt, .{name});
+    const install_name = try std.fmt.bufPrint(install_name_buf.items, install_name_fmt, .{name});
+    const run_name = try std.fmt.bufPrint(run_name_buf.items, run_name_fmt, .{name});
     const install_desc = try std.fmt.bufPrint(install_desc_buf.items, install_desc_fmt, .{name});
     const run_desc = try std.fmt.bufPrint(run_desc_buf.items, run_desc_fmt, .{name});
 
-    const install_step = b.step(name, install_desc);
-    install_step.dependOn(&b.addInstallArtifact(step, .{}).step);
+    const source_filename_fmt = comptime thisPath("/examples/{s}/src/main.zig");
 
-    const run_step = b.step(full_name, run_desc);
-    const run_cmd = b.addRunArtifact(step);
+    var source_filename_buf = try std.ArrayList(u8).initCapacity(b.allocator, std.fmt.count(source_filename_fmt, .{name}));
+    errdefer source_filename_buf.deinit();
+
+    source_filename_buf.expandToCapacity();
+
+    const source_filename = try std.fmt.bufPrint(source_filename_buf.items, source_filename_fmt, .{name});
+
+    const exe = b.addExecutable(.{
+        .name = name,
+        .root_source_file = .{ .path = source_filename },
+        .target = target,
+        .optimize = optimize,
+    });
+
+    _ = link(b, exe);
+
+    b.installArtifact(exe);
+
+    const install_step = b.step(install_name, install_desc);
+    install_step.dependOn(&b.addInstallArtifact(exe, .{}).step);
+
+    const run_step = b.step(run_name, run_desc);
+    const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(install_step);
     run_step.dependOn(&run_cmd.step);
 
@@ -62,7 +96,7 @@ pub fn build(b: *std.Build) !void {
             continue;
         }
 
-        try install(b, triangle.build(b, target, optimize), entry.name);
+        try install(b, target, optimize, entry.name);
     }
 }
 
