@@ -1,6 +1,6 @@
 # Clowder
 > [!WARNING]
-> Still in early developpment
+> This project is still in early developpment.
 
 A simple, ECS based game engine.
 
