@@ -54,10 +54,11 @@ fn healSystem(app: *clw.App) !void {
 }
 ```
 
-That being done, we can add our system to the app.
+Finally, we can add our system to the app.
 
 ```zig
 var app = try clw.App.init(allocator, .{
+    // ...
     .systems = &.{healSystem},
 });
 
