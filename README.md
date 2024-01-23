@@ -2,7 +2,7 @@
 > [!WARNING]
 > This project is still in early developpment.
 
-A simple, ECS based game engine.
+A simple, ECS based graphical applications engine.
 
 ## What's ECS ?
 ECS is a way of writing your games where entities are given components, wich
@@ -39,11 +39,12 @@ our health component. For that, we need to create a system.
 ```zig
 fn healSystem(app: *clw.App) !void {
     // The query will give us all the entities that respect the predicate.
-    // In our case, we're asking for all entities with a `Health` component.
+    // In our case, we're asking for all entities with a health component.
     var health_query = app.query(.{Health}, .{});
 
     // We can then iterate over our entities.
     while (health_query.next()) |entity| {
+        // Here we get the health component of our entity.
         var health = app.getComponentPtr(entity, Health).?;
         health.value += 1;
 
@@ -59,6 +60,7 @@ Finally, we can add our system to the app.
 ```zig
 var app = try clw.App.init(allocator, .{
     // ...
+    // Our system will be called each cycle.
     .systems = &.{healSystem},
 });
 

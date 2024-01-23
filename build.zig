@@ -84,7 +84,7 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
 
-    _ = link(b, lib);
+    const module = link(b, lib);
 
     b.installArtifact(lib);
 
@@ -98,6 +98,26 @@ pub fn build(b: *std.Build) !void {
 
         try install(b, target, optimize, entry.name);
     }
+
+    const unit_tests = b.addTest(.{
+        .root_source_file = .{ .path = "src/root.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+
+    var imports_iter = module.import_table.iterator();
+
+    while (imports_iter.next()) |entry| {
+        const module_name = entry.key_ptr.*;
+        const module_ = entry.value_ptr.*;
+
+        unit_tests.root_module.addImport(module_name, module_);
+    }
+
+    const run_unit_tests = b.addRunArtifact(unit_tests);
+
+    const test_step = b.step("test", "Run unit tests");
+    test_step.dependOn(&run_unit_tests.step);
 }
 
 pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {

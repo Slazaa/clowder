@@ -4,7 +4,7 @@ const std = @import("std");
 const clw = @import("clowder");
 
 // This is our init system, it will be called once when initalizing the `App`.
-pub fn initSystem(app: *clw.App) !void {
+fn initSystem(app: *clw.App) !void {
     // In there, we spawn a new entity, that represents our triangle.
     // Note that entities are just IDs and they don't hold any data.
     const triangle = app.spawn();
@@ -17,15 +17,20 @@ pub fn initSystem(app: *clw.App) !void {
         app.allocator,
         // We first set the vertices positions.
         &.{
-            .{ -0.8, -0.8, 0.0 },
-            .{ 0.8, -0.8, 0.0 },
-            .{ 0.0, 0.8, 0.0 },
+            .{ -0.7, -0.7, 0.0 },
+            .{ 0.7, -0.7, 0.0 },
+            .{ 0.0, 0.7, 0.0 },
         },
-        // And then their colors.
+        // Then we set their colors.
         &.{
             clw.Color.red,
             clw.Color.green,
             clw.Color.blue,
+        },
+        // And then we set their indices.
+        // For each index, the associated vertex will be drawn in the given order.
+        &.{
+            .{ 0, 1, 2 },
         },
     ));
 }

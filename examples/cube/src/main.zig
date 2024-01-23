@@ -2,8 +2,28 @@ const std = @import("std");
 
 const clw = @import("clowder");
 
-pub fn initSystem(app: *clw.App) !void {
-    _ = app;
+fn initSystem(app: *clw.App) !void {
+    const quad = app.spawn();
+
+    try app.addComponent(quad, try clw.Mesh(.{}).init(
+        app.allocator,
+        &.{
+            .{ -0.5, -0.5, 0.0 },
+            .{ 0.5, -0.5, 0.0 },
+            .{ -0.5, 0.5, 0.0 },
+            .{ 0.5, 0.5, 0.0 },
+        },
+        &.{
+            clw.Color.red,
+            clw.Color.green,
+            clw.Color.blue,
+            clw.Color.red,
+        },
+        &.{
+            .{ 2, 0, 1 },
+            .{ 1, 3, 2 },
+        },
+    ));
 }
 
 pub fn main() !void {
