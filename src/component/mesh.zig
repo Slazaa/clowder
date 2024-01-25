@@ -8,12 +8,13 @@ pub fn Mesh(comptime config: render.RendererConfig) type {
         const Self = @This();
 
         const Renderer = render.Renderer(config);
+        const RenderObject = render.RenderObject(config.render_backend);
 
         positions: std.ArrayList(f32),
         colors: std.ArrayList(f32),
         indices: std.ArrayList(u32),
 
-        render_object: Renderer.RenderObject,
+        render_object: RenderObject,
 
         pub fn init(
             allocator: std.mem.Allocator,
@@ -49,7 +50,7 @@ pub fn Mesh(comptime config: render.RendererConfig) type {
                 }
             }
 
-            const render_object = Renderer.RenderObject.init(
+            const render_object = RenderObject.init(
                 position_list.items,
                 color_list.items,
                 index_list.items,

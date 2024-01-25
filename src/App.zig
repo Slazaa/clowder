@@ -129,3 +129,10 @@ pub fn addComponent(self: *Self, entity: ecs.Entity, component: anytype) !void {
 pub fn query(self: Self, comptime includes: anytype, comptime excludes: anytype) ecs.Query(includes, excludes) {
     return self.registry.query(includes, excludes);
 }
+
+/// Returns the first `Entity` depending on the components they have or not.
+/// If the such entity does not exist, returns `null`.
+pub inline fn getFirst(self: Self, comptime includes: anytype, comptime excludes: anytype) ?ecs.Entity {
+    var query_ = self.query(includes, excludes);
+    return query_.next();
+}

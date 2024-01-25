@@ -4,20 +4,17 @@ const std = @import("std");
 const window = @import("clowder_window");
 const math = @import("clowder_math");
 
+const root = @import("root.zig");
+
 const Color = @import("Color.zig");
 
-pub const Backend = enum {
-    opengl,
-};
-
 pub const Config = struct {
-    render_backend: Backend = .opengl,
+    render_backend: root.Backend = .opengl,
     window_backend: window.Backend = window.default_backend,
 };
 
 pub const Context = struct {
     clear: *const fn (color: Color) void,
-    display: *const fn () void,
 };
 
 /// Represents a renderer.
@@ -28,15 +25,16 @@ pub fn Renderer(comptime config: Config) type {
 
         const backend_base = switch (config.render_backend) {
             .opengl => switch (config.window_backend) {
-                .win32 => @import("base/opengl/win32.zig"),
+                .win32 => @import("base/opengl/win32/Renderer.zig"),
             },
         };
 
         pub const Error = backend_base.Error;
 
-        pub const RenderObject = backend_base.RenderObject;
-
         const Base = backend_base.Base;
+
+        const Material = root.Material(config.render_backend);
+        const RenderObject = root.RenderObject(config.render_backend);
 
         const Window = window.Window(config.window_backend);
 
@@ -45,22 +43,14 @@ pub fn Renderer(comptime config: Config) type {
 
         /// Initializes a new `Renderer`.
         /// Deinitialize it with `deinit`.
-        pub fn init(window_context: Window.Context, shader_report: ?*std.ArrayList(u8)) !Self {
+        pub fn init(window_context: Window.Context) !Self {
             if (window_context.backend != config.window_backend) {
                 @compileError("Renderer backend does not match window backend");
             }
 
-            const vertex_shader_source = @embedFile("shader/glsl/default.vert");
-            const fragment_shader_source = @embedFile("shader/glsl/default.frag");
-
             return .{
                 .window_context = window_context,
-                .backend_base = try Base.init(
-                    window_context,
-                    vertex_shader_source,
-                    fragment_shader_source,
-                    shader_report,
-                ),
+                .backend_base = try Base.init(window_context),
             };
         }
 
@@ -75,7 +65,6 @@ pub fn Renderer(comptime config: Config) type {
                 .renderer = self,
 
                 .clear = Self.clear,
-                .display = Self.display,
             };
         }
 
@@ -89,8 +78,9 @@ pub fn Renderer(comptime config: Config) type {
             Base.swap(self.window_context);
         }
 
-        pub fn render(_: Self, render_object: RenderObject) void {
-            Base.render(render_object);
+        /// Renders `render_object` with `material`.
+        pub fn render(_: Self, render_object: RenderObject, material: Material) void {
+            Base.render(render_object, material);
         }
     };
 }

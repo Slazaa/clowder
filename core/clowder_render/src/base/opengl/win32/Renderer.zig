@@ -1,13 +1,12 @@
 const std = @import("std");
 
 const clw_window = @import("clowder_window");
-
 const win_nat = clw_window.native;
 
-const Color = @import("../../Color.zig");
-const nat = @import("../../native/opengl.zig");
+const nat = @import("../../../native/opengl.zig");
+const opengl = @import("../../opengl.zig");
 
-const opengl = @import("../opengl.zig");
+const Color = @import("../../../Color.zig");
 
 const Window = clw_window.Window(.win32);
 
@@ -34,7 +33,6 @@ pub const Base = struct {
 
     window_context: Window.Context,
     context: win_nat.HGLRC,
-    shader_program: nat.GLuint,
 
     fn initExtensions() Error!void {
         const window = win_nat.CreateWindowExA(
@@ -178,28 +176,14 @@ pub const Base = struct {
         return context;
     }
 
-    pub fn init(
-        window_context: Window.Context,
-        vertex_shader_source: [:0]const u8,
-        fragment_shader_source: [:0]const u8,
-        shader_report: ?*std.ArrayList(u8),
-    ) !Self {
+    pub fn init(window_context: Window.Context) !Self {
         const context = try initContenxt(window_context.base.device_context);
 
         nat.load(@ptrCast(&win_nat.wglGetProcAddress));
 
-        const shader_program = try opengl.initShaderProgram(
-            vertex_shader_source,
-            fragment_shader_source,
-            shader_report,
-        );
-
-        nat.glUseProgram(shader_program);
-
         return .{
             .window_context = window_context,
             .context = context,
-            .shader_program = shader_program,
         };
     }
 
@@ -213,7 +197,8 @@ pub const Base = struct {
         _ = win_nat.SwapBuffers(window_context.base.device_context);
     }
 
-    pub fn render(render_object: opengl.RenderObject) void {
+    pub fn render(render_object: opengl.RenderObject, material: opengl.Material) void {
+        material.select();
         opengl.render(render_object);
     }
 };

@@ -7,55 +7,9 @@ const nat = @import("../native/opengl.zig");
 
 const Color = @import("../Color.zig");
 
-pub const RenderObject = @import("opengL/RenderObject.zig");
-
-pub fn initShader(type_: nat.GLuint, source: [:0]const u8, report: ?*std.ArrayList(u8)) !nat.GLuint {
-    const shader = nat.glCreateShader(type_);
-    errdefer nat.glDeleteShader(shader);
-
-    nat.glShaderSource(shader, 1, @ptrCast(&source), null);
-    nat.glCompileShader(shader);
-
-    var compiled: nat.GLint = undefined;
-
-    nat.glGetShaderiv(shader, nat.GL_COMPILE_STATUS, &compiled);
-
-    if (compiled == nat.GL_FALSE) {
-        if (report) |report_| {
-            var max_len: nat.GLint = undefined;
-
-            nat.glGetShaderiv(shader, nat.GL_INFO_LOG_LENGTH, &max_len);
-
-            try report_.ensureTotalCapacity(@intCast(max_len));
-            report_.expandToCapacity();
-
-            nat.glGetShaderInfoLog(shader, max_len, &max_len, @ptrCast(report_.items));
-        }
-
-        return error.CouldNotCompileShader;
-    }
-
-    return shader;
-}
-
-pub fn initShaderProgram(
-    vert_source: [:0]const u8,
-    frag_source: [:0]const u8,
-    shader_report: ?*std.ArrayList(u8),
-) !nat.GLuint {
-    const shader_program = nat.glCreateProgram();
-
-    const vert_shader = try initShader(nat.GL_VERTEX_SHADER, vert_source, shader_report);
-    const frag_shader = try initShader(nat.GL_FRAGMENT_SHADER, frag_source, shader_report);
-
-    nat.glAttachShader(shader_program, vert_shader);
-    nat.glAttachShader(shader_program, frag_shader);
-
-    nat.glLinkProgram(shader_program);
-    nat.glValidateProgram(shader_program);
-
-    return shader_program;
-}
+pub const Material = @import("opengl/Material.zig");
+pub const RenderObject = @import("opengl/RenderObject.zig");
+pub const Shader = @import("opengl/shader.zig").Shader;
 
 pub fn clear(color: Color, window_size: math.Vec2u) void {
     nat.glViewport(0, 0, @intCast(window_size[0]), @intCast(window_size[1]));
