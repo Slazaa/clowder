@@ -6,14 +6,13 @@ const Self = @This();
 
 shader_program: nat.GLuint,
 
-pub fn init(vertex_shader: Shader(.vertex), fragment_shader: Shader(.fragment)) !Self {
+pub fn init(shader: Shader) !Self {
     const shader_program = nat.glCreateProgram();
 
-    const compiled_vertex_shader = try vertex_shader.compile(null);
-    const compiled_fragment_shader = try fragment_shader.compile(null);
+    const compiled_shader = try shader.compile();
 
-    nat.glAttachShader(shader_program, compiled_vertex_shader);
-    nat.glAttachShader(shader_program, compiled_fragment_shader);
+    nat.glAttachShader(shader_program, compiled_shader.fragment_shader);
+    nat.glAttachShader(shader_program, compiled_shader.vertex_shader);
 
     nat.glLinkProgram(shader_program);
     nat.glValidateProgram(shader_program);

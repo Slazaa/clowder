@@ -1,5 +1,7 @@
 const std = @import("std");
 
+const Vec3f = @import("vec3").Vec3f;
+
 pub fn Mat(
     comptime T: type,
     comptime m: usize,
@@ -7,6 +9,8 @@ pub fn Mat(
 ) type {
     return struct {
         const Self = @This();
+
+        pub const Child = T;
 
         pub const row_count = m;
         pub const column_count = n;
@@ -30,7 +34,7 @@ pub fn Mat(
 
         values: [row_count * column_count]T,
 
-        pub fn init(values: [][]const T) !Self {
+        pub fn init(values: []const []const T) !Self {
             if (values.len != row_count) {
                 return error.InvalidValues;
             }
@@ -49,38 +53,92 @@ pub fn Mat(
             };
         }
 
-        fn checkPos(row: usize, column: usize) void {
+        inline fn checkPos(row: usize, column: usize) void {
             if (row >= row_count or column >= column_count) {
                 @panic("Index out of range");
             }
         }
 
-        pub fn get(self: Self, row: usize, column: usize) T {
+        pub inline fn get(self: Self, row: usize, column: usize) T {
             checkPos(row, column);
             self.values[row * row_count + column];
         }
 
-        pub fn set(self: *Self, row: usize, column: usize, value: T) void {
+        pub inline fn set(self: *Self, row: usize, column: usize, value: T) void {
             checkPos(row, column);
             self.values[row * m + column] = value;
         }
 
-        pub fn eql(a: Self, b: Self) bool {
+        pub inline fn eql(a: Self, b: Self) bool {
             return std.mem.eql(T, a.values, b.values);
         }
 
-        pub fn mult(a: Self, b: anytype) @TypeOf(b) {
-            _ = a;
+        pub fn add(a: Self, b: anytype) @TypeOf(b) {
             const Out = @TypeOf(b);
-            _ = Out;
 
-            if (row_count != b.row_count) {
-                @compileError("Cannot multiply matrices with different row counts");
+            if (column_count != b.row_count) {
+                @compileError("Cannot multiply matrices with column count different that row count");
             }
 
-            @panic("Not implemented yet");
+            var result: Out = undefined;
+
+            for (0..Out.rows) |i| {
+                for (0..Out.columns) |j| {
+                    result.set(i, j, a.get(i, j) + b.get(i, j));
+                }
+            }
+
+            return result;
+        }
+
+        pub fn mult(a: Self, b: anytype) @TypeOf(b) {
+            const Out = @TypeOf(b);
+
+            if (column_count != b.row_count) {
+                @compileError("Cannot multiply matrices with column count different that row count");
+            }
+
+            var result: Out = undefined;
+
+            for (0..Out.rows) |i| {
+                for (0..Out.columns) |j| {
+                    var res: Out.Child = 0;
+
+                    for (0..Out.columns) |k| {
+                        res += a.get(i, k) * b.get(k, j);
+                    }
+
+                    result.set(i, j, res);
+                }
+            }
+
+            return result;
         }
     };
 }
 
 pub const Mat4x4f = Mat(f32, 4, 4);
+
+pub fn scale(mat: Mat4x4f, vec: Vec3f) Mat4x4f {
+    return Mat4x4f.mult(
+        mat,
+        Mat4x4f.init(.{
+            .{ vec.get(0), 0, 0, 0 },
+            .{ 0, vec.get(1), 0, 0 },
+            .{ 0, 0, vec.get(2), 0 },
+            .{ 0, 0, 0, 1 },
+        }),
+    );
+}
+
+pub fn translate(mat: Mat4x4f, vec: Vec3f) Mat4x4f {
+    return Mat4x4f.add(
+        mat,
+        Mat4x4f.init(.{
+            .{ 1, 0, 0, vec.get(0) },
+            .{ 0, 1, 0, vec.get(1) },
+            .{ 0, 0, 1, vec.get(2) },
+            .{ 0, 0, 0, 1 },
+        }),
+    );
+}

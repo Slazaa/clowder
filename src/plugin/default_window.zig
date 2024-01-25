@@ -54,8 +54,10 @@ pub fn initDefaultMaterialSystem(app: *root.App) !void {
     const default_material = app.spawn();
 
     const material = try root.DefaultMaterial.init(
-        root.DefaultShader(.vertex).fromSource(default_vertex_shader_source),
-        root.DefaultShader(.fragment).fromSource(default_fragment_shader_source),
+        root.DefaultShader.fromSources(
+            default_fragment_shader_source,
+            default_vertex_shader_source,
+        ),
     );
 
     try app.addComponent(default_material, DefaultMaterial{material});
@@ -102,6 +104,7 @@ pub fn system(app: *root.App) !void {
 
         while (mesh_query.next()) |mesh_entity| {
             const mesh = app.getComponent(mesh_entity, root.Mesh(.{})).?;
+
             renderer.render(mesh.render_object, default_material);
         }
 

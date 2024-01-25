@@ -2,54 +2,75 @@ const std = @import("std");
 
 const nat = @import("../../native/opengl.zig");
 
-const Type = @import("../../shader.zig").Type;
+pub const CompiledShader = struct {
+    fragment_shader: nat.GLuint,
+    vertex_shader: nat.GLuint,
+};
 
-pub const CompiledShader = nat.GLuint;
+pub const Shader = struct {
+    const Self = @This();
 
-pub fn Shader(comptime type_: Type) type {
-    return struct {
-        const Self = @This();
+    const Type = enum {
+        fragment,
+        vertex,
+    };
 
-        source: [:0]const u8,
+    fragment_source: [:0]const u8,
+    vertex_source: [:0]const u8,
 
-        pub fn fromSource(source: [:0]const u8) Self {
-            return .{
-                .source = source,
-            };
-        }
+    pub fn fromSources(fragment_source: [:0]const u8, vertex_source: [:0]const u8) Self {
+        return .{
+            .fragment_source = fragment_source,
+            .vertex_source = vertex_source,
+        };
+    }
 
-        pub fn compile(self: Self, report: ?*std.ArrayList(u8)) !CompiledShader {
-            const gl_type = switch (type_) {
-                .fragment => nat.GL_FRAGMENT_SHADER,
-                .vertex => nat.GL_VERTEX_SHADER,
-            };
+    fn compileSingle(self: Self, comptime type_: Type, report: ?*std.ArrayList(u8)) !nat.GLuint {
+        const gl_type = switch (type_) {
+            .fragment => nat.GL_FRAGMENT_SHADER,
+            .vertex => nat.GL_VERTEX_SHADER,
+        };
 
-            const shader = nat.glCreateShader(gl_type);
-            errdefer nat.glDeleteShader(shader);
+        const source = switch (type_) {
+            .fragment => self.fragment_source,
+            .vertex => self.vertex_source,
+        };
 
-            nat.glShaderSource(shader, 1, @ptrCast(&self.source), null);
-            nat.glCompileShader(shader);
+        const shader = nat.glCreateShader(gl_type);
+        errdefer nat.glDeleteShader(shader);
 
-            var compiled: nat.GLint = undefined;
+        nat.glShaderSource(shader, 1, @ptrCast(&source), null);
+        nat.glCompileShader(shader);
 
-            nat.glGetShaderiv(shader, nat.GL_COMPILE_STATUS, &compiled);
+        var compiled: nat.GLint = undefined;
 
-            if (compiled == nat.GL_FALSE) {
-                if (report) |report_| {
-                    var max_len: nat.GLint = undefined;
+        nat.glGetShaderiv(shader, nat.GL_COMPILE_STATUS, &compiled);
 
-                    nat.glGetShaderiv(shader, nat.GL_INFO_LOG_LENGTH, &max_len);
+        if (compiled == nat.GL_FALSE) {
+            if (report) |report_| {
+                var max_len: nat.GLint = undefined;
 
-                    try report_.ensureTotalCapacity(@intCast(max_len));
-                    report_.expandToCapacity();
+                nat.glGetShaderiv(shader, nat.GL_INFO_LOG_LENGTH, &max_len);
 
-                    nat.glGetShaderInfoLog(shader, max_len, &max_len, @ptrCast(report_.items));
-                }
+                try report_.ensureTotalCapacity(@intCast(max_len));
+                report_.expandToCapacity();
 
-                return error.CouldNotCompileShader;
+                nat.glGetShaderInfoLog(shader, max_len, &max_len, @ptrCast(report_.items));
             }
 
-            return shader;
+            return error.CouldNotCompileShader;
         }
-    };
-}
+
+        return shader;
+    }
+
+    pub fn compile(self: Self) !CompiledShader {
+        const fragment_shader = try self.compileSingle(.fragment, null);
+        const vertex_shader = try self.compileSingle(.vertex, null);
+
+        return .{
+            .fragment_shader = fragment_shader,
+            .vertex_shader = vertex_shader,
+        };
+    }
+};
