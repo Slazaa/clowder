@@ -54,13 +54,13 @@ fn loadCriticalChunk(reader: std.fs.File.Reader, image: *root.Image, header_info
         image.size[1] = try reader.readInt(u32, .big);
     }
 
-    // Image data
+    // Image data.
     else if (std.mem.eql(u8, &header_infos.type, "IDAT")) {
         //
     }
 
-    // Palette
-    else if (std.mem.eql(u8, &HeaderInfos.type, "PLTE")) {
+    // Palette.
+    else if (std.mem.eql(u8, &header_infos.type, "PLTE")) {
         //
     }
 
