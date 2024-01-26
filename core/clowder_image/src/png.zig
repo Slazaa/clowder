@@ -93,21 +93,19 @@ fn loadAncillaryChunk(reader: std.fs.File.Reader, image: *root.Image, header_inf
 }
 
 fn loadChunk(reader: std.fs.File.Reader, image: *root.Image, header_infos: HeaderInfos) !?Chunk {
-    if (loadCriticalChunk(reader, image, header_infos)) |chunk| {
-        return chunk;
-    } else |err| {
-        switch (err) {
-            error.InvalidData => {},
-            else => return err,
-        }
-    }
+    const loaders = .{
+        loadCriticalChunk,
+        loadAncillaryChunk,
+    };
 
-    if (loadAncillaryChunk(reader, image, header_infos)) |chunk| {
-        return chunk;
-    } else |err| {
-        switch (err) {
-            error.InvalidData => {},
-            else => return err,
+    inline for (loaders) |loader| {
+        if (loader(reader, image, header_infos)) |chunk| {
+            return chunk;
+        } else |err| {
+            switch (err) {
+                error.InvalidData => {},
+                else => return err,
+            }
         }
     }
 
