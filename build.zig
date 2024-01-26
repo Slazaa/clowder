@@ -1,6 +1,7 @@
 const std = @import("std");
 
 const clw_ecs = @import("core/clowder_ecs/build.zig");
+const clw_image = @import("core/clowder_image/build.zig");
 const clw_math = @import("core/clowder_math/build.zig");
 const clw_render = @import("core/clowder_render/build.zig");
 const clw_window = @import("core/clowder_window/build.zig");
@@ -127,6 +128,10 @@ pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
             .{
                 .name = "clowder_ecs",
                 .module = clw_ecs.link(b, step),
+            },
+            .{
+                .name = "clowder_image",
+                .module = clw_image.link(b, step),
             },
             .{
                 .name = "clowder_math",

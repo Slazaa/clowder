@@ -53,6 +53,8 @@ pub fn init(allocator: std.mem.Allocator, plugin: Plugin) !Self {
         .registry = try ecs.Registry.init(allocator),
     };
 
+    errdefer self.deinit();
+
     try plugin.load(&self);
 
     return self;
