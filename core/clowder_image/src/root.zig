@@ -8,6 +8,12 @@ pub const Error = error{
     InvalidData,
 };
 
+pub fn Rgb(comptime T: type) type {
+    return struct { r: T, g: T, b: T };
+}
+
+pub const Rgb24 = Rgb(u8);
+
 pub const Image = struct {
     const Self = @This();
 

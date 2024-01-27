@@ -19,8 +19,16 @@ const Chunk = struct {
     data: std.ArrayList(u8),
 };
 
+const ColorType = enum(u8) {
+    grayscale = 0,
+    rgb_color = 2,
+    indexed = 3,
+    grayscale_alpha = 4,
+    rgba_color = 6,
+};
+
 fn checkSignature(reader: std.fs.File.Reader) root.Error!void {
-    var file_signature: [8]u8 = undefined;
+    var file_signature: [signature.len]u8 = undefined;
 
     try reader.readNoEof(&file_signature);
 
@@ -41,7 +49,14 @@ fn loadHeaderInfos(reader: std.fs.File.Reader) !HeaderInfos {
     try reader.readNoEof(&header_infos.type);
 }
 
-fn loadCriticalChunk(reader: std.fs.File.Reader, image: *root.Image, header_infos: HeaderInfos) !?Chunk {
+fn loadCriticalChunk(
+    allocator: std.mem.Allocator,
+    reader: std.fs.File.Reader,
+    image: *root.Image,
+    color_type: *ColorType,
+    palette: *?std.ArrayList(root.Rgb24),
+    header_infos: HeaderInfos,
+) !?Chunk {
     var chunk: Chunk = undefined;
 
     // Image header.
@@ -52,6 +67,10 @@ fn loadCriticalChunk(reader: std.fs.File.Reader, image: *root.Image, header_info
 
         image.size[0] = try reader.readInt(u32, .big);
         image.size[1] = try reader.readInt(u32, .big);
+
+        try reader.skipBytes(1, .{});
+
+        color_type.* = @enumFromInt(try reader.readInt(u8, .big));
     }
 
     // Image data.
@@ -61,7 +80,27 @@ fn loadCriticalChunk(reader: std.fs.File.Reader, image: *root.Image, header_info
 
     // Palette.
     else if (std.mem.eql(u8, &header_infos.type, "PLTE")) {
-        //
+        if (color_type.* != .indexed and
+            color_type.* != .rgb_color and
+            color_type.* != .rgba_color)
+        {
+            return root.Error.InvalidData;
+        }
+
+        if (header_infos.length % 3 != 0) {
+            return root.Error.InvalidData;
+        }
+
+        const entry_count = header_infos.length / 3;
+
+        if (palette != null) {
+            return root.Error.InvalidData;
+        }
+
+        palette = std.ArrayList(root.Rgb24).initCapacity(allocator, entry_count);
+        palette.?.expandToCapacity();
+
+        try reader.readNoEof(palette.?.items);
     }
 
     // Image end.
@@ -92,20 +131,32 @@ fn loadAncillaryChunk(reader: std.fs.File.Reader, image: *root.Image, header_inf
     return true;
 }
 
-fn loadChunk(reader: std.fs.File.Reader, image: *root.Image, header_infos: HeaderInfos) !?Chunk {
-    const loaders = .{
-        loadCriticalChunk,
-        loadAncillaryChunk,
-    };
+fn loadChunk(
+    allocator: std.mem.Allocator,
+    reader: std.fs.File.Reader,
+    image: *root.Image,
+    color_type: *ColorType,
+    header_infos: HeaderInfos,
+) !?Chunk {
+    if (loadCriticalChunk(
+        allocator,
+        reader,
+        image,
+        color_type,
+        header_infos,
+    )) |chunk| {
+        return chunk;
+    } else |err| {
+        if (err != error.InvalidData) {
+            return err;
+        }
+    }
 
-    inline for (loaders) |loader| {
-        if (loader(reader, image, header_infos)) |chunk| {
-            return chunk;
-        } else |err| {
-            switch (err) {
-                error.InvalidData => {},
-                else => return err,
-            }
+    if (loadAncillaryChunk(reader, image, header_infos)) |chunk| {
+        return chunk;
+    } else |err| {
+        if (err != error.InvalidData) {
+            return err;
         }
     }
 
@@ -118,10 +169,18 @@ pub fn load(allocator: std.mem.Allocator, reader: std.fs.File.Reader) !root.Imag
 
     try checkSignature(reader);
 
+    var color_type: ColorType = undefined;
+
     while (true) {
         const header_infos = try loadHeaderInfos(reader);
 
-        const chunk = try loadChunk(reader, &image, header_infos) orelse {
+        const chunk = try loadChunk(
+            allocator,
+            reader,
+            &image,
+            &color_type,
+            header_infos,
+        ) orelse {
             break;
         };
 
