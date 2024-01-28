@@ -5,7 +5,7 @@ const math = @import("clowder_math");
 pub const png = @import("png.zig");
 
 pub const Error = error{
-    InvalidData,
+    InvalidFormat,
 };
 
 pub fn Rgb(comptime T: type) type {
@@ -41,6 +41,6 @@ pub fn loadFromFile(allocator: std.mem.Allocator, path: [:0]const u8) !Image {
     if (std.mem.endsWith(u8, path, ".png")) {
         return try png.load(allocator, reader);
     } else {
-        return error.InvalidFormat;
+        return Error.InvalidFormat;
     }
 }
