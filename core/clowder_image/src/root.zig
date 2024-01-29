@@ -9,7 +9,7 @@ pub const Error = error{
 };
 
 pub fn Rgb(comptime T: type) type {
-    return struct { r: T, g: T, b: T };
+    return packed struct { r: T, g: T, b: T };
 }
 
 pub const Rgb24 = Rgb(u8);
@@ -32,8 +32,8 @@ pub const Image = struct {
     }
 };
 
-pub fn loadFromFile(allocator: std.mem.Allocator, path: [:0]const u8) !Image {
-    const file = try std.fs.cwd().openFile(path);
+pub fn loadImage(allocator: std.mem.Allocator, path: [:0]const u8) !Image {
+    const file = try std.fs.cwd().openFile(path, .{});
     defer file.close();
 
     const reader = file.reader();

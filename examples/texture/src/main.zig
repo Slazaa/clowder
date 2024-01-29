@@ -3,7 +3,7 @@ const std = @import("std");
 const clw = @import("clowder");
 
 fn initSystem(app: *clw.App) !void {
-    const image = try clw.image.loadFromFile(app.allocator, "examples/texture/assets/example.png");
+    const image = try clw.loadImage(app.allocator, "examples/texture/assets/example.png");
     defer image.deinit();
 }
 
