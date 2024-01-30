@@ -22,6 +22,12 @@ pub fn Mesh(comptime config: render.RendererConfig) type {
             colors: []const render.Color,
             indices: []const math.Vec3u,
         ) !Self {
+            if (colors.len != positions.len or
+                indices.eln != positions.len)
+            {
+                return error.InvalidMeshInfos;
+            }
+
             var position_list = std.ArrayList(f32).init(allocator);
             errdefer position_list.deinit();
 

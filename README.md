@@ -1,10 +1,10 @@
-# Clowder
+# Clowder 🐱
 > [!WARNING]
 > This project is still in early developpment.
 
 A simple, ECS based graphical application engine.
 
-## What's ECS ?
+## What's ECS ? 🤔
 ECS is a way of writing your games where entities are given components, wich
 represent data. You can then apply logic to them through systems.
 
@@ -33,7 +33,7 @@ try app.addComponent(entity, Health{
 });
 ```
 
-Our player now has health, hurray! We now need logic for entities that have
+Our player now has health, hurray! 🎉 We now need logic for entities that have
 our health component. For that, we need to create a system.
 
 ```zig
@@ -69,6 +69,6 @@ defer app.deinit();
 
 That's it! Now you know what ECS is.
 
-## Examples
+## Examples 📝
 You can run examples but writting `zig build example-<example_name>`.For
 example, `zig build example-triangle` will run the triangle example.

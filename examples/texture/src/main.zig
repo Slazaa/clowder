@@ -3,7 +3,7 @@ const std = @import("std");
 const clw = @import("clowder");
 
 fn initSystem(app: *clw.App) !void {
-    const image = try clw.loadImage(app.allocator, "examples/texture/assets/example.png");
+    const image = try clw.loadImage(app.allocator, "examples/texture/assets/example.tga");
     defer image.deinit();
 }
 
@@ -13,7 +13,7 @@ pub fn main() !void {
 
     const allocator = gpa.allocator();
 
-    var app = try clw.App.init(allocator, .{
+    var app = try clw.init(allocator, .{
         .plugins = &.{clw.default_plugin},
         .initSystems = &.{initSystem},
     });

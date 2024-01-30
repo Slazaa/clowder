@@ -2,7 +2,8 @@ const std = @import("std");
 
 const math = @import("clowder_math");
 
-pub const png = @import("png.zig");
+// pub const png = @import("png.zig"); // WIP
+pub const tga = @import("tga.zig");
 
 pub const Error = error{
     InvalidFormat,
@@ -38,9 +39,13 @@ pub fn loadImage(allocator: std.mem.Allocator, path: [:0]const u8) !Image {
 
     const reader = file.reader();
 
-    if (std.mem.endsWith(u8, path, ".png")) {
-        return try png.load(allocator, reader);
-    } else {
+    // TGA
+    if (std.mem.endsWith(u8, path, ".tga")) {
+        return try tga.load(allocator, reader);
+    }
+
+    // Invalid format.
+    else {
         return Error.InvalidFormat;
     }
 }

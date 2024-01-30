@@ -1,3 +1,5 @@
+const std = @import("std");
+
 pub const ecs = @import("clowder_ecs");
 pub const image = @import("clowder_image");
 pub const math = @import("clowder_math");
@@ -25,3 +27,7 @@ pub const default_plugin = Plugin{
         plugin.default_window.plugin,
     },
 };
+
+pub inline fn init(allocator: std.mem.Allocator, app_plugin: Plugin) !App {
+    return try App.init(allocator, app_plugin);
+}

@@ -43,7 +43,7 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     // Here we create our `App`.
-    var app = try clw.App.init(allocator, .{
+    var app = try clw.init(allocator, .{
         // We set our plugins, wich here is the default one.
         // `default_plugin` will take care of setting up a basic window as well
         // as a renderer and will render our `Mesh` component.
