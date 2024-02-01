@@ -24,4 +24,7 @@ pub fn init(shader: Shader) !Self {
 
 pub fn select(self: Self) void {
     nat.glUseProgram(self.shader_program);
+
+    const texture_uniform = nat.glGetUniformLocation(self.shader_program, "texture");
+    nat.glUniform1i(texture_uniform, 0);
 }

@@ -31,12 +31,13 @@ pub fn Renderer(comptime config: Config) type {
 
         pub const Error = backend_base.Error;
 
+        const Window = window.Window(config.window_backend);
+
         const Base = backend_base.Base;
 
         const Material = root.Material(config.render_backend);
         const RenderObject = root.RenderObject(config.render_backend);
-
-        const Window = window.Window(config.window_backend);
+        const Texture = root.Texture(config.render_backend);
 
         window_context: Window.Context,
         backend_base: Base,
@@ -79,8 +80,13 @@ pub fn Renderer(comptime config: Config) type {
         }
 
         /// Renders `render_object` with `material`.
-        pub fn render(_: Self, render_object: RenderObject, material: Material) void {
-            Base.render(render_object, material);
+        pub fn render(
+            _: Self,
+            render_object: RenderObject,
+            material: Material,
+            texture: ?Texture,
+        ) void {
+            Base.render(render_object, material, texture);
         }
     };
 }

@@ -17,11 +17,17 @@ pub const Shader = struct {
 
     fragment_source: [:0]const u8,
     vertex_source: [:0]const u8,
+    report: ?*std.ArrayList(u8),
 
-    pub fn fromSources(fragment_source: [:0]const u8, vertex_source: [:0]const u8) Self {
+    pub fn fromSources(
+        fragment_source: [:0]const u8,
+        vertex_source: [:0]const u8,
+        report: ?*std.ArrayList(u8),
+    ) Self {
         return .{
             .fragment_source = fragment_source,
             .vertex_source = vertex_source,
+            .report = report,
         };
     }
 
@@ -52,8 +58,7 @@ pub const Shader = struct {
 
                 nat.glGetShaderiv(shader, nat.GL_INFO_LOG_LENGTH, &max_len);
 
-                try report_.ensureTotalCapacity(@intCast(max_len));
-                report_.expandToCapacity();
+                try report_.resize(@intCast(max_len));
 
                 nat.glGetShaderInfoLog(shader, max_len, &max_len, @ptrCast(report_.items));
             }
@@ -65,8 +70,8 @@ pub const Shader = struct {
     }
 
     pub fn compile(self: Self) !CompiledShader {
-        const fragment_shader = try self.compileSingle(.fragment, null);
-        const vertex_shader = try self.compileSingle(.vertex, null);
+        const fragment_shader = try self.compileSingle(.fragment, self.report);
+        const vertex_shader = try self.compileSingle(.vertex, self.report);
 
         return .{
             .fragment_shader = fragment_shader,

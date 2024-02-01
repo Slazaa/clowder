@@ -197,8 +197,12 @@ pub const Base = struct {
         _ = win_nat.SwapBuffers(window_context.base.device_context);
     }
 
-    pub fn render(render_object: opengl.RenderObject, material: opengl.Material) void {
+    pub fn render(
+        render_object: opengl.RenderObject,
+        material: opengl.Material,
+        texture: ?opengl.Texture,
+    ) void {
         material.select();
-        opengl.render(render_object);
+        opengl.render(render_object, texture);
     }
 };

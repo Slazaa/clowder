@@ -4,7 +4,7 @@ const Self = @This();
 
 pub const default = init(
     math.Vec3f.zero,
-    math.Vec3f.init(1, 1, 1),
+    .{ 1, 1, 1 },
     math.Vec2f.zero,
 );
 

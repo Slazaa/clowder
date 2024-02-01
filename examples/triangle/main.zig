@@ -27,6 +27,11 @@ fn initSystem(app: *clw.App) !void {
             clw.Color.green,
             clw.Color.blue,
         },
+        &.{
+            .{ 0.0, 0.0 },
+            .{ 1.0, 0.0 },
+            .{ 0.5, 1.0 },
+        },
         // And then we set their indices.
         // For each index, the associated vertex will be drawn in the given order.
         &.{
