@@ -5,7 +5,7 @@
 A simple, ECS based graphical application engine.
 
 ## What's ECS ? 🤔
-ECS is a way of writing your games where entities are given components, wich
+ECS is a way of writing your applications where entities are given components, wich
 represent data. You can then apply logic to them through systems.
 
 Let's see an example. I want a player that has health and that heals over time.

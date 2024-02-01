@@ -3,11 +3,7 @@ const std = @import("std");
 
 const clw_math = @import("clowder_math");
 
-const screen = @import("screen.zig");
-
-pub const Backend = enum {
-    win32,
-};
+const root = @import("root.zig");
 
 pub const WindowPos = union(enum) {
     center,
@@ -18,7 +14,7 @@ pub const Event = enum(u1) {
     close,
 };
 
-pub const default_backend: Backend = switch (builtin.os.tag) {
+pub const default_backend: root.Backend = switch (builtin.os.tag) {
     .windows => .win32,
     else => @compileError("OS not supported"),
 };
@@ -30,7 +26,7 @@ pub const Config = packed struct {
 };
 
 /// Represents a window.
-pub fn Window(comptime backend: Backend) type {
+pub fn Window(comptime backend: root.Backend) type {
     return struct {
         const Self = @This();
 
@@ -41,9 +37,10 @@ pub fn Window(comptime backend: Backend) type {
         pub const Error = base.Error;
 
         const Base = base.Base;
+        const Screen = root.Screen(backend);
 
         pub const Context = struct {
-            comptime backend: Backend = backend,
+            comptime backend: root.Backend = backend,
             base: Base,
         };
 
@@ -60,7 +57,7 @@ pub fn Window(comptime backend: Backend) type {
             config: Config,
         ) Error!Self {
             const position_vec = switch (position) {
-                .center => @as(clw_math.Vec2i, @intCast(screen.getSize(.primary) - size)) /
+                .center => @as(clw_math.Vec2i, @intCast(Screen.getSize(.primary) - size)) /
                     @as(clw_math.Vec2i, @splat(2)),
                 .at => |at| at,
             };

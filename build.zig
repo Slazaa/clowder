@@ -43,7 +43,7 @@ fn install(
     const install_desc = try std.fmt.bufPrint(install_desc_buf.items, install_desc_fmt, .{name});
     const run_desc = try std.fmt.bufPrint(run_desc_buf.items, run_desc_fmt, .{name});
 
-    const source_filename_fmt = comptime thisPath("/examples/{s}/src/main.zig");
+    const source_filename_fmt = comptime thisPath("/examples/{s}/main.zig");
 
     var source_filename_buf = try std.ArrayList(u8).initCapacity(b.allocator, std.fmt.count(source_filename_fmt, .{name}));
     errdefer source_filename_buf.deinit();

@@ -6,7 +6,7 @@ const Vec2u = cwlmath.Vec2u;
 
 const screen_ = @import("../screen.zig");
 
-const Screen = screen_.Screen;
+const Screen = screen_.Screen(.win32);
 
 /// Returns the size of the `screen`.
 pub fn getSize(screen: Screen) Vec2u {

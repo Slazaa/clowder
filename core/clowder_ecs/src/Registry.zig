@@ -43,7 +43,7 @@ fn getComponentId(comptime Component: type) []const u8 {
 
 fn register(self: *Self, comptime Component: type) !void {
     if (@typeInfo(Component) == .ErrorUnion) {
-        @compileError("Found error union, check that you handle the errors when initializing components");
+        @compileError("Found error union, check that you handle errors when initializing components");
     }
 
     if (self.isRegistered(Component)) {

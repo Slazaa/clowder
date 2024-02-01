@@ -8,6 +8,7 @@ fn initSystem(app: *clw.App) !void {
     try app.addComponent(cube, clw.Mesh.init(
         app.allocator,
         &.{
+            // Z
             -0.5, -0.5, -0.5,
             -0.5, 0.5,  -0.5,
             0.5,  -0.5, -0.5,

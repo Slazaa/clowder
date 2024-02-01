@@ -1,5 +1,3 @@
-const nat = @import("../native/opengl.zig");
-
 const root = @import("root.zig");
 
 pub fn RenderObject(comptime backend: root.Backend) type {

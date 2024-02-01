@@ -1,13 +1,12 @@
-const builtin = @import("builtin");
-
-const os = builtin.os;
+const root = @import("root.zig");
 
 /// Represents a screen.
-pub const Screen = enum {
-    primary,
-};
+pub fn Screen(comptime backend: root.Backend) type {
+    return enum {
+        primary,
 
-pub usingnamespace switch (os.tag) {
-    .windows => @import("screen/win32.zig"),
-    else => @compileError("OS not supported"),
-};
+        pub usingnamespace switch (backend) {
+            .win32 => @import("screen/win32.zig"),
+        };
+    };
+}

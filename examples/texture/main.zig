@@ -3,8 +3,25 @@ const std = @import("std");
 const clw = @import("clowder");
 
 fn initSystem(app: *clw.App) !void {
-    const image = try clw.loadImage(app.allocator, "examples/texture/assets/example.tga");
+    const image = try clw.loadImage(app.allocator, "examples/texture/example.tga");
     defer image.deinit();
+
+    const square = app.spawn();
+
+    try app.addComponent(square, try clw.Mesh(.{}).init(
+        app.allocator,
+        &.{
+            .{ -0.5, -0.5, 0.0 },
+            .{ -0.5, 0.5, 0.0 },
+            .{ 0.5, -0.5, 0.0 },
+            .{ 0.5, 0.5, 0.0 },
+        },
+        &.{},
+        &.{
+            .{ 0, 1, 2 },
+            .{ 1, 3, 2 },
+        },
+    ));
 }
 
 pub fn main() !void {
