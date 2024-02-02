@@ -5,7 +5,7 @@ const clw = @import("clowder");
 fn initSystem(app: *clw.App) !void {
     const square = app.spawn();
 
-    try app.addComponent(square, try clw.Mesh(.{}).init(
+    const mesh = try clw.Mesh(.{}).init(
         app.allocator,
         &.{
             .{ -0.5, -0.5, 0.0 },
@@ -24,9 +24,13 @@ fn initSystem(app: *clw.App) !void {
             .{ 0, 1, 2 },
             .{ 1, 3, 2 },
         },
-    ));
+    );
 
-    const image = try clw.loadImage(app.allocator, "examples/texture/example.tga");
+    errdefer mesh.deinit();
+
+    try app.addComponent(square, mesh);
+
+    const image = try clw.loadImage(app.allocator, "examples/texture/example.png");
     defer image.deinit();
 
     try app.addComponent(square, clw.DefaultTexture.initFromImage(image, .nearest));

@@ -6,7 +6,7 @@ const win_nat = clw_window.native;
 const nat = @import("../../../native/opengl.zig");
 const opengl = @import("../../opengl.zig");
 
-const Color = @import("../../../Color.zig");
+const root = @import("../../../root.zig");
 
 const Window = clw_window.Window(.win32);
 
@@ -33,6 +33,8 @@ pub const Base = struct {
 
     window_context: Window.Context,
     context: win_nat.HGLRC,
+
+    default_texture: opengl.Texture,
 
     fn initExtensions() Error!void {
         const window = win_nat.CreateWindowExA(
@@ -181,15 +183,19 @@ pub const Base = struct {
 
         nat.load(@ptrCast(&win_nat.wglGetProcAddress));
 
+        const default_texture = opengl.Texture.default();
+
         return .{
             .window_context = window_context,
             .context = context,
+
+            .default_texture = default_texture,
         };
     }
 
     pub fn deinit(_: Self) void {}
 
-    pub fn clear(self: Self, color: Color) void {
+    pub fn clear(self: Self, color: root.Color) void {
         opengl.clear(color, self.window_context.base.getSize());
     }
 
@@ -198,11 +204,12 @@ pub const Base = struct {
     }
 
     pub fn render(
+        self: Self,
         render_object: opengl.RenderObject,
         material: opengl.Material,
         texture: ?opengl.Texture,
     ) void {
         material.select();
-        opengl.render(render_object, texture);
+        opengl.render(render_object, self.default_texture, texture);
     }
 };

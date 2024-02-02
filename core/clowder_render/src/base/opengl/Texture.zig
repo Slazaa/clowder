@@ -1,4 +1,7 @@
+const std = @import("std");
+
 const image_ = @import("clowder_image");
+const math = @import("clowder_math");
 
 const nat = @import("../../native/opengl.zig");
 
@@ -11,7 +14,7 @@ pub const FilterType = enum {
 
 native: nat.GLuint,
 
-pub fn initFromImage(image: image_.Image, filter_type: FilterType) Self {
+pub fn initRaw(data: []const u8, size: math.Vec2u, filter_type: FilterType) Self {
     var native: nat.GLuint = undefined;
 
     nat.glGenTextures(1, @ptrCast(&native));
@@ -33,15 +36,23 @@ pub fn initFromImage(image: image_.Image, filter_type: FilterType) Self {
         nat.GL_TEXTURE_2D,
         0,
         nat.GL_RGBA,
-        @intCast(image.size[0]),
-        @intCast(image.size[1]),
+        @intCast(size[0]),
+        @intCast(size[1]),
         0,
         nat.GL_RGBA,
         nat.GL_UNSIGNED_BYTE,
-        @ptrCast(image.data.items),
+        @ptrCast(data),
     );
 
     return .{
         .native = native,
     };
+}
+
+pub fn initFromImage(image: image_.Image, filter_type: FilterType) Self {
+    return initRaw(image.data.items, image.size, filter_type);
+}
+
+pub fn default() Self {
+    return initRaw(&(.{std.math.maxInt(u8)} ** 4), .{ 1, 1 }, .nearest);
 }

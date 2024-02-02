@@ -81,12 +81,12 @@ pub fn Renderer(comptime config: Config) type {
 
         /// Renders `render_object` with `material`.
         pub fn render(
-            _: Self,
+            self: Self,
             render_object: RenderObject,
             material: Material,
             texture: ?Texture,
         ) void {
-            Base.render(render_object, material, texture);
+            self.backend_base.render(render_object, material, texture);
         }
     };
 }

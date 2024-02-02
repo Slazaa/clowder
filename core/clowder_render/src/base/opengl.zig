@@ -19,11 +19,13 @@ pub fn clear(color: Color, window_size: math.Vec2u) void {
     nat.glClear(nat.GL_COLOR_BUFFER_BIT | nat.GL_DEPTH_BUFFER_BIT | nat.GL_STENCIL_BUFFER_BIT);
 }
 
-pub fn render(render_object: RenderObject, texture: ?Texture) void {
+pub fn render(render_object: RenderObject, default_texture: Texture, texture: ?Texture) void {
     nat.glBindVertexArray(render_object.position_vbo);
     nat.glDrawElements(nat.GL_TRIANGLES, @intCast(render_object.vertices_count), nat.GL_UNSIGNED_INT, null);
 
     if (texture) |texture_| {
         nat.glBindTexture(nat.GL_TEXTURE_2D, texture_.native);
+    } else {
+        nat.glBindTexture(nat.GL_TEXTURE_2D, default_texture.native);
     }
 }

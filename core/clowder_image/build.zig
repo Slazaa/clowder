@@ -2,10 +2,12 @@ const std = @import("std");
 
 const clw_math = @import("../clowder_math/build.zig");
 
+const zigimg = @import("lib/zigimg/build.zig");
+
 var module: ?*std.Build.Module = null;
 
-fn thisPath(comptime suffix: []const u8) []const u8 {
-    return comptime (std.fs.path.dirname(@src().file) orelse ".") ++ suffix;
+inline fn thisPath() []const u8 {
+    return comptime std.fs.path.dirname(@src().file) orelse ".";
 }
 
 pub fn build(b: *std.Build) void {
@@ -41,7 +43,7 @@ pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
     }
 
     module = b.createModule(.{
-        .root_source_file = .{ .path = thisPath("/src/root.zig") },
+        .root_source_file = .{ .path = thisPath() ++ "/src/root.zig" },
         .imports = &.{
             .{
                 .name = "clowder_math",
@@ -51,6 +53,8 @@ pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
     });
 
     const module_ = module.?;
+
+    module_.addImport("zigimg", zigimg.link(b, step));
 
     step.root_module.addImport("clowder_ecs", module_);
 
