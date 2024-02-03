@@ -2,7 +2,15 @@
 > [!WARNING]
 > This project is still in early developpment.
 
-A simple, ECS based engine to make graphical applications.
+A simple, ECS based engine for graphical applications.
+
+## Mindset 🧠
+I want to keep Clowder simple, and I want the source code to be easy to read.
+That's why the I try to use a lot of comments. I also want to emphasize on the
+use of examples, which I hope could be the main source of documentation.
+
+I do not plan on adding a GUI for Clowder. I think it would go against that
+simple and lightweight mindset.
 
 ## What's ECS ? 🤔
 ECS is a way of writing your applications where entities are given components, wich
@@ -72,3 +80,9 @@ That's it! Now you know what ECS is.
 ## Examples 📝
 You can run examples but writting `zig build example-<example_name>`.For
 example, `zig build example-triangle` will run the triangle example.
+
+## Support Me ❤️
+This engine is open source and free to use. For that reason, donations would be
+greatly appreciated. Thank you. ❤
+
+My Patreon: https://www.patreon.com/Slazaa
