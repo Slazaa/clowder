@@ -112,7 +112,7 @@ pub fn system(app: *root.App) !void {
             app.exit();
         }
 
-        renderer.clear(root.Color.rgb(0.1, 0.1, 0.1));
+        renderer.clear(root.Color.black);
 
         var mesh_query = app.query(.{root.Mesh(.{})}, .{});
 
@@ -120,7 +120,7 @@ pub fn system(app: *root.App) !void {
             const mesh = app.getComponent(mesh_entity, root.Mesh(.{})).?;
             const texture = app.getComponent(mesh_entity, root.DefaultTexture);
 
-            renderer.render(mesh.render_object, default_material, texture);
+            renderer.render(mesh.render_object, default_material, null, texture);
         }
 
         renderer.swap();

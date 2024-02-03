@@ -195,8 +195,8 @@ pub const Base = struct {
 
     pub fn deinit(_: Self) void {}
 
-    pub fn clear(self: Self, color: root.Color) void {
-        opengl.clear(color, self.window_context.base.getSize());
+    pub fn clear(_: Self, color: root.Color) void {
+        opengl.clear(color);
     }
 
     pub fn swap(window_context: Window.Context) void {
@@ -207,9 +207,17 @@ pub const Base = struct {
         self: Self,
         render_object: opengl.RenderObject,
         material: opengl.Material,
+        viewport: root.Viewport,
         texture: ?opengl.Texture,
     ) void {
         material.select();
-        opengl.render(render_object, self.default_texture, texture);
+
+        opengl.render(
+            render_object,
+            self.window_context.base.getSize(),
+            viewport,
+            self.default_texture,
+            texture,
+        );
     }
 };

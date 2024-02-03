@@ -2,7 +2,7 @@
 > [!WARNING]
 > This project is still in early developpment.
 
-A simple, ECS based graphical application engine.
+A simple, ECS based engine to make graphical applications.
 
 ## What's ECS ? 🤔
 ECS is a way of writing your applications where entities are given components, wich

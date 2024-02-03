@@ -19,6 +19,7 @@ pub const RenderObject = render_object.RenderObject;
 pub const Shader = shader.Shader;
 pub const ShaderType = shader.Type;
 pub const Texture = texture.Texture;
+pub const Viewport = @import("Viewport.zig");
 
 pub const Backend = enum {
     opengl,
