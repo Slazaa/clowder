@@ -17,9 +17,9 @@ fn initSystem(app: *clw.App) !void {
         app.allocator,
         // We first set the vertices positions.
         &.{
-            .{ -0.7, -0.7, 0.0 },
-            .{ 0.7, -0.7, 0.0 },
-            .{ 0.0, 0.7, 0.0 },
+            .{ -200, 150, 0 },
+            .{ 200, 150, 0 },
+            .{ 0, -150, 0 },
         },
         // Then we set their colors.
         &.{
@@ -41,7 +41,7 @@ fn initSystem(app: *clw.App) !void {
 }
 
 pub fn main() !void {
-    // Classic GPA!
+    // This is the allocator for our `App`.
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
 
@@ -49,10 +49,9 @@ pub fn main() !void {
 
     // Here we create our `App`.
     var app = try clw.init(allocator, .{
-        // We set our plugins, wich here is the default one.
-        // `default_plugin` will take care of setting up a basic window as well
-        // as a renderer and will render our `Mesh` component.
-        .plugins = &.{clw.default_plugin},
+        // We set our plugins, wich here is the beginner one.
+        // This plugin sets up a basic environment.
+        .plugins = &.{clw.plugin.beginner},
         // And we add our init systems, here being `initSystem`.
         .initSystems = &.{initSystem},
     });

@@ -8,17 +8,17 @@ fn initSystem(app: *clw.App) !void {
     const mesh = try clw.Mesh(.{}).init(
         app.allocator,
         &.{
-            .{ -0.5, -0.5, 0.0 },
-            .{ -0.5, 0.5, 0.0 },
-            .{ 0.5, -0.5, 0.0 },
-            .{ 0.5, 0.5, 0.0 },
+            .{ -128, -128, 0 },
+            .{ -128, 128, 0 },
+            .{ 128, -128, 0 },
+            .{ 128, 128, 0 },
         },
         &.{},
         &.{
-            .{ 0.0, 1.0 },
             .{ 0.0, 0.0 },
-            .{ 1.0, 1.0 },
+            .{ 0.0, 1.0 },
             .{ 1.0, 0.0 },
+            .{ 1.0, 1.0 },
         },
         &.{
             .{ 0, 1, 2 },
@@ -43,7 +43,7 @@ pub fn main() !void {
     const allocator = gpa.allocator();
 
     var app = try clw.init(allocator, .{
-        .plugins = &.{clw.default_plugin},
+        .plugins = &.{clw.plugin.beginner},
         .initSystems = &.{initSystem},
     });
 

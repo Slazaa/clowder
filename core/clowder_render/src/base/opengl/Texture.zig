@@ -13,6 +13,7 @@ pub const FilterType = enum {
 };
 
 native: nat.GLuint,
+size: math.Vec2u,
 
 pub fn initRaw(data: []const u8, size: math.Vec2u, filter_type: FilterType) Self {
     var native: nat.GLuint = undefined;
@@ -46,6 +47,7 @@ pub fn initRaw(data: []const u8, size: math.Vec2u, filter_type: FilterType) Self
 
     return .{
         .native = native,
+        .size = size,
     };
 }
 

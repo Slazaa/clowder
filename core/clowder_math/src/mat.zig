@@ -1,6 +1,11 @@
 const std = @import("std");
 
-const Vec3f = @import("vec3").Vec3f;
+const vec2 = @import("vec2.zig");
+const vec3 = @import("vec3.zig");
+
+const Vec2u = vec2.Vec2u;
+
+const Vec3f = vec3.Vec3f;
 
 pub fn Mat(
     comptime T: type,
@@ -23,7 +28,7 @@ pub fn Mat(
                     var mat = Self.zero;
 
                     for (0..row_count) |i| {
-                        mat[i][i] = 1;
+                        mat.set(i, i, 1);
                     }
 
                     break :blk mat;
@@ -34,19 +39,27 @@ pub fn Mat(
 
         values: [row_count * column_count]T,
 
-        pub fn init(values: []const []const T) !Self {
+        pub fn init(values: []const []const T) Self {
             if (values.len != row_count) {
-                return error.InvalidValues;
+                @panic("Invalid values");
             }
 
             for (values) |row| {
                 if (row.len != column_count) {
-                    return error.InvalidValues;
+                    @panic("Invalid values");
                 }
             }
 
             var values_: [row_count * column_count]T = undefined;
-            @memset(&values_, values);
+
+            for (0..row_count * column_count) |i| {
+                const pos = Vec2u{
+                    @intCast(i % column_count),
+                    @intCast(@divFloor(i, column_count)),
+                };
+
+                values_[i] = values[pos[0]][pos[1]];
+            }
 
             return .{
                 .values = values_,
@@ -61,7 +74,7 @@ pub fn Mat(
 
         pub inline fn get(self: Self, row: usize, column: usize) T {
             checkPos(row, column);
-            self.values[row * row_count + column];
+            return self.values[row * row_count + column];
         }
 
         pub inline fn set(self: *Self, row: usize, column: usize, value: T) void {
@@ -94,17 +107,17 @@ pub fn Mat(
         pub fn mult(a: Self, b: anytype) @TypeOf(b) {
             const Out = @TypeOf(b);
 
-            if (column_count != b.row_count) {
+            if (column_count != Out.row_count) {
                 @compileError("Cannot multiply matrices with column count different that row count");
             }
 
             var result: Out = undefined;
 
-            for (0..Out.rows) |i| {
-                for (0..Out.columns) |j| {
+            for (0..Out.row_count) |i| {
+                for (0..Out.column_count) |j| {
                     var res: Out.Child = 0;
 
-                    for (0..Out.columns) |k| {
+                    for (0..Out.column_count) |k| {
                         res += a.get(i, k) * b.get(k, j);
                     }
 
@@ -141,4 +154,13 @@ pub fn translate(mat: Mat4x4f, vec: Vec3f) Mat4x4f {
             .{ 0, 0, 0, 1 },
         }),
     );
+}
+
+pub fn orthographicRhNo(left: f32, right: f32, top: f32, bottom: f32, near: f32, far: f32) Mat4x4f {
+    return Mat4x4f.init(&.{
+        &.{ 2 / (right - left), 0, 0, 0 },
+        &.{ 0, 2 / (top - bottom), 0, 0 },
+        &.{ 0, 0, 2 / (near - far), 0 },
+        &.{ -(right + left) / (right - left), -(top + bottom) / (top - bottom), (near + far) / (near - far), 1 },
+    });
 }

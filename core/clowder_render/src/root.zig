@@ -6,6 +6,7 @@ const render_object = @import("render_object.zig");
 const shader = @import("shader.zig");
 const texture = @import("texture.zig");
 
+pub const Camera = @import("Camera.zig");
 pub const Color = @import("Color.zig");
 pub const DefaultMaterial = material.DefaultMaterial;
 pub const DefaultRenderObject = render_object.DefaultRenderObject;

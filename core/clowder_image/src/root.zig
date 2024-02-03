@@ -3,7 +3,7 @@ const std = @import("std");
 const math = @import("clowder_math");
 
 // pub const png = @import("png.zig"); // WIP
-// pub const tga = @import("tga.zig");
+// pub const tga = @import("tga.zig"); // WIP
 
 const img = @import("zigimg");
 

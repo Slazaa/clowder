@@ -126,6 +126,22 @@ pub fn addComponent(self: *Self, entity: ecs.Entity, component: anytype) !void {
     try self.registry.addComponent(entity, component);
 }
 
+/// Adds `bundle` to `entity`.
+pub fn addBundle(self: *Self, entity: ecs.Entity, bundle: anytype) !void {
+    const Bundle = @TypeOf(bundle);
+    const bundle_info = @typeInfo(Bundle);
+
+    if (bundle_info != .Struct) {
+        @compileError("Expected struct, found '" ++ @typeName(Bundle) ++ "'");
+    }
+
+    if (!@hasDecl(Bundle, "build")) {
+        @compileError("Bundles require a build fonction, but '" ++ @typeName(Bundle) ++ "' doesn't have one");
+    }
+
+    try bundle.build(self, entity);
+}
+
 /// Returns a `Query` that filters entities depending on the components
 /// they have or not.
 pub fn query(self: Self, comptime includes: anytype, comptime excludes: anytype) ecs.Query(includes, excludes) {

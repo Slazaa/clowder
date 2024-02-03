@@ -14,8 +14,10 @@ const default_vertex_shader_source =
     \\out vec4 fColor;
     \\out vec2 fUvCoords;
     \\
+    \\uniform mat4 proj;
+    \\
     \\void main() {
-    \\    gl_Position = vec4(aPosition, 1.0f);
+    \\    gl_Position = proj * vec4(aPosition, 1.0f);
     \\
     \\    fColor = aColor;
     \\    fUvCoords = aUvCoords;
@@ -55,6 +57,15 @@ pub fn initWindowSystem(app: *root.App) !void {
 
     try app.addComponent(main_window, window);
     try app.addComponent(main_window, renderer);
+}
+
+pub fn initCameraSystem(app: *root.App) !void {
+    const window_entity = app.getFirst(.{ root.DefaultWindow, root.Renderer(.{}) }, .{}).?;
+    const window = app.getComponent(window_entity, root.DefaultWindow).?;
+
+    const camera = app.spawn();
+
+    try app.addBundle(camera, root.bundle.OrthographicCamera.init(window.getSize()));
 }
 
 pub fn initDefaultMaterialSystem(app: *root.App) !void {
@@ -100,19 +111,23 @@ pub fn system(app: *root.App) !void {
     const default_material_entity = app.getFirst(.{DefaultMaterial}, .{}).?;
     const default_material = app.getComponent(default_material_entity, DefaultMaterial).?[0];
 
-    var query = app.query(.{ root.DefaultWindow, root.Renderer(.{}) }, .{});
+    const window_entity = app.getFirst(.{ root.DefaultWindow, root.Renderer(.{}) }, .{}).?;
 
-    while (query.next()) |entity| {
-        const window = app.getComponentPtr(entity, root.DefaultWindow).?;
-        const renderer = app.getComponent(entity, root.Renderer(.{})).?;
+    const window = app.getComponentPtr(window_entity, root.DefaultWindow).?;
+    const renderer = app.getComponent(window_entity, root.Renderer(.{})).?;
 
-        try window.update();
+    try window.update();
 
-        if (window.shouldClose()) {
-            app.exit();
-        }
+    if (window.shouldClose()) {
+        app.exit();
+    }
 
-        renderer.clear(root.Color.black);
+    renderer.clear(root.Color.black);
+
+    var camera_query = app.query(.{root.Camera}, .{});
+
+    while (camera_query.next()) |camera_entity| {
+        const camera = app.getComponent(camera_entity, root.Camera).?;
 
         var mesh_query = app.query(.{root.Mesh(.{})}, .{});
 
@@ -120,16 +135,17 @@ pub fn system(app: *root.App) !void {
             const mesh = app.getComponent(mesh_entity, root.Mesh(.{})).?;
             const texture = app.getComponent(mesh_entity, root.DefaultTexture);
 
-            renderer.render(mesh.render_object, default_material, null, texture);
+            renderer.render(mesh.render_object, default_material, camera, texture);
         }
-
-        renderer.swap();
     }
+
+    renderer.swap();
 }
 
 pub const plugin = root.App.Plugin{
     .initSystems = &.{
         initWindowSystem,
+        initCameraSystem,
         initDefaultMaterialSystem,
     },
     .deinitSystems = &.{deinitSystem},

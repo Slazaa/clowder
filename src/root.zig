@@ -17,16 +17,11 @@ pub const App = @import("App.zig");
 pub const System = App.System;
 pub const Plugin = App.Plugin;
 
+pub const bundle = @import("bundle.zig");
 pub const component = @import("component.zig");
 pub const plugin = @import("plugin.zig");
 
 pub usingnamespace component;
-
-pub const default_plugin = Plugin{
-    .plugins = &.{
-        plugin.default_window.plugin,
-    },
-};
 
 pub inline fn init(allocator: std.mem.Allocator, app_plugin: Plugin) !App {
     return try App.init(allocator, app_plugin);

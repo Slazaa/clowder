@@ -84,13 +84,13 @@ pub fn Renderer(comptime config: Config) type {
             self: Self,
             render_object: RenderObject,
             material: Material,
-            viewport: ?root.Viewport,
+            camera: root.Camera,
             texture: ?Texture,
         ) void {
             self.backend_base.render(
                 render_object,
                 material,
-                viewport orelse root.Viewport.default,
+                camera,
                 texture,
             );
         }

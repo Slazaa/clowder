@@ -1,12 +1,14 @@
+const math = @import("clowder_math");
+
 const nat = @import("../../native/opengl.zig");
 
-const Shader = @import("shader.zig").Shader;
+const opengl = @import("../opengl.zig");
 
 const Self = @This();
 
 shader_program: nat.GLuint,
 
-pub fn init(shader: Shader) !Self {
+pub fn init(shader: opengl.Shader) !Self {
     const shader_program = nat.glCreateProgram();
 
     const compiled_shader = try shader.compile();
@@ -25,6 +27,6 @@ pub fn init(shader: Shader) !Self {
 pub fn select(self: Self) void {
     nat.glUseProgram(self.shader_program);
 
-    const texture_uniform = nat.glGetUniformLocation(self.shader_program, "texture");
+    const texture_uniform = nat.glGetUniformLocation(self.shader_program, "tex");
     nat.glUniform1i(texture_uniform, 0);
 }

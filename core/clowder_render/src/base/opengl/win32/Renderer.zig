@@ -1,14 +1,16 @@
 const std = @import("std");
 
-const clw_window = @import("clowder_window");
-const win_nat = clw_window.native;
+const math = @import("clowder_math");
+const window = @import("clowder_window");
+
+const win_nat = window.native;
 
 const nat = @import("../../../native/opengl.zig");
 const opengl = @import("../../opengl.zig");
 
 const root = @import("../../../root.zig");
 
-const Window = clw_window.Window(.win32);
+const Window = window.Window(.win32);
 
 pub const Error = Window.Error || error{
     CouldNotChoosePixelFormat,
@@ -37,7 +39,7 @@ pub const Base = struct {
     default_texture: opengl.Texture,
 
     fn initExtensions() Error!void {
-        const window = win_nat.CreateWindowExA(
+        const window_ = win_nat.CreateWindowExA(
             0,
             "STATIC",
             "Dummy Clowder Window",
@@ -54,7 +56,7 @@ pub const Base = struct {
             return error.CouldNotCreateWindow;
         };
 
-        const device_context = win_nat.GetDC(window) orelse {
+        const device_context = win_nat.GetDC(window_) orelse {
             return error.CouldNotGetDeviceContext;
         };
 
@@ -122,8 +124,8 @@ pub const Base = struct {
 
         _ = win_nat.wglMakeCurrent(device_context, null);
         _ = win_nat.wglDeleteContext(context);
-        _ = win_nat.ReleaseDC(window, device_context);
-        _ = win_nat.DestroyWindow(window);
+        _ = win_nat.ReleaseDC(window_, device_context);
+        _ = win_nat.DestroyWindow(window_);
     }
 
     fn initContenxt(device_context: win_nat.HDC) Error!win_nat.HGLRC {
@@ -207,15 +209,18 @@ pub const Base = struct {
         self: Self,
         render_object: opengl.RenderObject,
         material: opengl.Material,
-        viewport: root.Viewport,
+        camera: root.Camera,
         texture: ?opengl.Texture,
     ) void {
         material.select();
 
+        const projection_uniform = nat.glGetUniformLocation(material.shader_program, "proj");
+        nat.glUniformMatrix4fv(projection_uniform, 1, nat.GL_FALSE, &camera.projection.values);
+
         opengl.render(
             render_object,
             self.window_context.base.getSize(),
-            viewport,
+            camera.viewport,
             self.default_texture,
             texture,
         );

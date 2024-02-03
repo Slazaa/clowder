@@ -1,13 +1,13 @@
 const builtin = @import("builtin");
 const std = @import("std");
 
-const clw_math = @import("clowder_math");
+const math = @import("clowder_math");
 
 const root = @import("root.zig");
 
 pub const WindowPos = union(enum) {
     center,
-    at: clw_math.Vec2i,
+    at: math.Vec2i,
 };
 
 pub const Event = enum(u1) {
@@ -53,12 +53,12 @@ pub fn Window(comptime backend: root.Backend) type {
             allocator: std.mem.Allocator,
             title: [:0]const u8,
             position: WindowPos,
-            size: clw_math.Vec2u,
+            size: math.Vec2u,
             config: Config,
         ) Error!Self {
             const position_vec = switch (position) {
-                .center => @as(clw_math.Vec2i, @intCast(Screen.getSize(.primary) - size)) /
-                    @as(clw_math.Vec2i, @splat(2)),
+                .center => @as(math.Vec2i, @intCast(Screen.getSize(.primary) - size)) /
+                    @as(math.Vec2i, @splat(2)),
                 .at => |at| at,
             };
 
@@ -74,6 +74,11 @@ pub fn Window(comptime backend: root.Backend) type {
         pub fn deinit(self: Self) void {
             self.events.deinit();
             self.base.deinit();
+        }
+
+        /// Returns the size of the `Window`.
+        pub inline fn getSize(self: Self) math.Vec2u {
+            return self.base.getSize();
         }
 
         /// Returns a `Context` of the `Window`.
