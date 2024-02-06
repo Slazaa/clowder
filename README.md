@@ -10,7 +10,7 @@ That's why the I try to use a lot of comments. I also want to emphasize on the
 use of examples, which I hope could be the main source of documentation.
 
 I do not plan on adding a GUI for Clowder. I think it would go against that
-simple and lightweight mindset.
+simplicity and lightweight mindset.
 
 ## What's ECS ? 🤔
 ECS is a way of writing your applications where entities are given components, wich
@@ -66,7 +66,7 @@ fn healSystem(app: *clw.App) !void {
 Finally, we can add our system to the app.
 
 ```zig
-var app = try clw.App.init(allocator, .{
+var app = try clw.init(allocator, .{
     // ...
     // Our system will be called each cycle.
     .systems = &.{healSystem},

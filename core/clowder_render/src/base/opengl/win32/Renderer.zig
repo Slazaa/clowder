@@ -210,12 +210,18 @@ pub const Base = struct {
         render_object: opengl.RenderObject,
         material: opengl.Material,
         camera: root.Camera,
+        transform: root.Transform,
         texture: ?opengl.Texture,
     ) void {
         material.select();
 
-        const projection_uniform = nat.glGetUniformLocation(material.shader_program, "proj");
-        nat.glUniformMatrix4fv(projection_uniform, 1, nat.GL_FALSE, &camera.projection.values);
+        var transform_matrix = math.Mat4x4f.identity;
+
+        transform_matrix = math.mat.translate(transform_matrix, transform.position);
+        transform_matrix = math.Mat4x4f.mult(transform_matrix, camera.projection);
+
+        const transform_uniform = nat.glGetUniformLocation(material.shader.program, "uTransform");
+        nat.glUniformMatrix4fv(transform_uniform, 1, nat.GL_FALSE, &transform_matrix.values);
 
         opengl.render(
             render_object,

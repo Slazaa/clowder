@@ -89,14 +89,14 @@ pub fn Mat(
         pub fn add(a: Self, b: anytype) @TypeOf(b) {
             const Out = @TypeOf(b);
 
-            if (column_count != b.row_count) {
-                @compileError("Cannot multiply matrices with column count different that row count");
+            if (column_count != Out.row_count) {
+                @compileError("Cannot add matrices with column count different that row count");
             }
 
             var result: Out = undefined;
 
-            for (0..Out.rows) |i| {
-                for (0..Out.columns) |j| {
+            for (0..Out.row_count) |i| {
+                for (0..Out.column_count) |j| {
                     result.set(i, j, a.get(i, j) + b.get(i, j));
                 }
             }
@@ -147,11 +147,11 @@ pub fn scale(mat: Mat4x4f, vec: Vec3f) Mat4x4f {
 pub fn translate(mat: Mat4x4f, vec: Vec3f) Mat4x4f {
     return Mat4x4f.add(
         mat,
-        Mat4x4f.init(.{
-            .{ 1, 0, 0, vec.get(0) },
-            .{ 0, 1, 0, vec.get(1) },
-            .{ 0, 0, 1, vec.get(2) },
-            .{ 0, 0, 0, 1 },
+        Mat4x4f.init(&.{
+            &.{ 1, 0, 0, vec[0] },
+            &.{ 0, 1, 0, vec[1] },
+            &.{ 0, 0, 1, vec[2] },
+            &.{ 0, 0, 0, 1 },
         }),
     );
 }

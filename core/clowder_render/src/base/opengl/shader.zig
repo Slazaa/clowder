@@ -2,11 +2,6 @@ const std = @import("std");
 
 const nat = @import("../../native/opengl.zig");
 
-pub const CompiledShader = struct {
-    fragment_shader: nat.GLuint,
-    vertex_shader: nat.GLuint,
-};
-
 pub const Shader = struct {
     const Self = @This();
 
@@ -15,31 +10,33 @@ pub const Shader = struct {
         vertex,
     };
 
-    fragment_source: [:0]const u8,
-    vertex_source: [:0]const u8,
-    report: ?*std.ArrayList(u8),
+    program: nat.GLuint,
 
     pub fn fromSources(
         fragment_source: [:0]const u8,
         vertex_source: [:0]const u8,
         report: ?*std.ArrayList(u8),
-    ) Self {
+    ) !Self {
+        const program = nat.glCreateProgram();
+
+        const fragment_shader = try compile(.fragment, fragment_source, report);
+        const vertex_shader = try compile(.vertex, vertex_source, report);
+
+        nat.glAttachShader(program, fragment_shader);
+        nat.glAttachShader(program, vertex_shader);
+
+        nat.glLinkProgram(program);
+        nat.glValidateProgram(program);
+
         return .{
-            .fragment_source = fragment_source,
-            .vertex_source = vertex_source,
-            .report = report,
+            .program = program,
         };
     }
 
-    fn compileSingle(self: Self, comptime type_: Type, report: ?*std.ArrayList(u8)) !nat.GLuint {
-        const gl_type = switch (type_) {
+    fn compile(type_: Type, source: [:0]const u8, report: ?*std.ArrayList(u8)) !nat.GLuint {
+        const gl_type: nat.GLenum = switch (type_) {
             .fragment => nat.GL_FRAGMENT_SHADER,
             .vertex => nat.GL_VERTEX_SHADER,
-        };
-
-        const source = switch (type_) {
-            .fragment => self.fragment_source,
-            .vertex => self.vertex_source,
         };
 
         const shader = nat.glCreateShader(gl_type);
@@ -69,13 +66,47 @@ pub const Shader = struct {
         return shader;
     }
 
-    pub fn compile(self: Self) !CompiledShader {
-        const fragment_shader = try self.compileSingle(.fragment, self.report);
-        const vertex_shader = try self.compileSingle(.vertex, self.report);
+    pub fn default() !Self {
+        const vertex_shader_source =
+            \\#version 450 core
+            \\
+            \\layout(location = 0) in vec3 aPosition;
+            \\layout(location = 1) in vec4 aColor;
+            \\layout(location = 2) in vec2 aUvCoords;
+            \\
+            \\out vec4 fColor;
+            \\out vec2 fUvCoords;
+            \\
+            \\uniform mat4 uTransform;
+            \\
+            \\void main() {
+            \\    gl_Position = uTransform * vec4(aPosition, 1.0f);
+            \\
+            \\    fColor = aColor;
+            \\    fUvCoords = aUvCoords;
+            \\}
+        ;
 
-        return .{
-            .fragment_shader = fragment_shader,
-            .vertex_shader = vertex_shader,
-        };
+        const fragment_shader_source =
+            \\#version 450 core
+            \\
+            \\in vec4 fColor;
+            \\in vec2 fUvCoords;
+            \\
+            \\out vec4 color;
+            \\
+            \\uniform vec4 uColor;
+            \\uniform sampler2D uTexture;
+            \\
+            \\void main() {
+            \\    color = texture(uTexture, fUvCoords) * fColor * uColor;
+            \\}
+        ;
+
+        return try fromSources(
+            fragment_shader_source,
+            vertex_shader_source,
+            null,
+        );
     }
 };

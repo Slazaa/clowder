@@ -2,42 +2,8 @@ const std = @import("std");
 
 const root = @import("../root.zig");
 
+pub const DefaultShader = struct { root.DefaultShader };
 pub const DefaultMaterial = struct { root.DefaultMaterial };
-
-const default_vertex_shader_source =
-    \\#version 450 core
-    \\
-    \\layout(location = 0) in vec3 aPosition;
-    \\layout(location = 1) in vec4 aColor;
-    \\layout(location = 2) in vec2 aUvCoords;
-    \\
-    \\out vec4 fColor;
-    \\out vec2 fUvCoords;
-    \\
-    \\uniform mat4 proj;
-    \\
-    \\void main() {
-    \\    gl_Position = proj * vec4(aPosition, 1.0f);
-    \\
-    \\    fColor = aColor;
-    \\    fUvCoords = aUvCoords;
-    \\}
-;
-
-const default_fragment_shader_source =
-    \\#version 450 core
-    \\
-    \\in vec4 fColor;
-    \\in vec2 fUvCoords;
-    \\
-    \\out vec4 color;
-    \\
-    \\uniform sampler2D tex;
-    \\
-    \\void main() {
-    \\    color = texture(tex, fUvCoords) * fColor;
-    \\}
-;
 
 pub fn initWindowSystem(app: *root.App) !void {
     const main_window = app.spawn();
@@ -68,24 +34,21 @@ pub fn initCameraSystem(app: *root.App) !void {
     try app.addBundle(camera, root.bundle.OrthographicCamera.init(window.getSize()));
 }
 
+pub fn initDefaultShaderSystem(app: *root.App) !void {
+    const shader_entity = app.spawn();
+
+    const shader = try root.DefaultShader.default();
+    try app.addComponent(shader_entity, DefaultShader{shader});
+}
+
 pub fn initDefaultMaterialSystem(app: *root.App) !void {
-    const default_material = app.spawn();
+    const default_shader_entity = app.getFirst(.{DefaultShader}, .{}).?;
+    const default_shader = app.getComponent(default_shader_entity, DefaultShader).?[0];
 
-    var shader_report = std.ArrayList(u8).init(app.allocator);
-    defer shader_report.deinit();
+    const material_entity = app.spawn();
 
-    const material = root.DefaultMaterial.init(
-        root.DefaultShader.fromSources(
-            default_fragment_shader_source,
-            default_vertex_shader_source,
-            &shader_report,
-        ),
-    ) catch |err| {
-        std.log.err("{s}", .{shader_report.items});
-        return err;
-    };
-
-    try app.addComponent(default_material, DefaultMaterial{material});
+    const material = root.DefaultMaterial.init(default_shader, null, null);
+    try app.addComponent(material_entity, DefaultMaterial{material});
 }
 
 pub fn deinitSystem(app: *root.App) void {
@@ -122,7 +85,7 @@ pub fn system(app: *root.App) !void {
         app.exit();
     }
 
-    renderer.clear(root.Color.black);
+    renderer.clear(root.Color.rgb(0.1, 0.1, 0.1));
 
     var camera_query = app.query(.{root.Camera}, .{});
 
@@ -133,19 +96,23 @@ pub fn system(app: *root.App) !void {
 
         while (mesh_query.next()) |mesh_entity| {
             const mesh = app.getComponent(mesh_entity, root.Mesh(.{})).?;
+
+            const transform = app.getComponent(mesh_entity, root.Transform) orelse root.Transform.default;
+            const material = app.getComponent(mesh_entity, root.DefaultMaterial) orelse default_material;
             const texture = app.getComponent(mesh_entity, root.DefaultTexture);
 
-            renderer.render(mesh.render_object, default_material, camera, texture);
+            renderer.render(mesh.render_object, material, camera, transform, texture);
         }
     }
 
     renderer.swap();
 }
 
-pub const plugin = root.App.Plugin{
+pub const plugin = root.Plugin{
     .initSystems = &.{
         initWindowSystem,
         initCameraSystem,
+        initDefaultShaderSystem,
         initDefaultMaterialSystem,
     },
     .deinitSystems = &.{deinitSystem},

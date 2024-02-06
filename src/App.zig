@@ -1,44 +1,13 @@
 const std = @import("std");
 
-const ecs = @import("clowder_ecs");
+const root = @import("root.zig");
 
 const Self = @This();
-
-pub const System = *const fn (app: *Self) anyerror!void;
-pub const DeinitSystem = *const fn (app: *Self) void;
-
-pub const Plugin = struct {
-    plugins: []const Plugin = &.{},
-
-    initSystems: []const System = &.{},
-    deinitSystems: []const DeinitSystem = &.{},
-    systems: []const System = &.{},
-
-    pub fn load(self: @This(), app: *Self) !void {
-        for (self.plugins) |plugin| {
-            try plugin.load(app);
-        }
-
-        for (self.initSystems) |system| {
-            try system(app);
-        }
-
-        for (self.deinitSystems) |system| {
-            const system_addr = @intFromPtr(system);
-            try app.deinit_systems.append(app.allocator, system_addr);
-        }
-
-        for (self.systems) |system| {
-            const system_addr = @intFromPtr(system);
-            try app.systems.append(app.allocator, system_addr);
-        }
-    }
-};
 
 const SystemAddr = usize;
 
 allocator: std.mem.Allocator,
-registry: ecs.Registry,
+registry: root.Registry,
 
 deinit_systems: std.ArrayListUnmanaged(SystemAddr) = std.ArrayListUnmanaged(SystemAddr){},
 systems: std.ArrayListUnmanaged(SystemAddr) = std.ArrayListUnmanaged(SystemAddr){},
@@ -47,10 +16,10 @@ is_exit: bool = false,
 
 /// Initiliazes a new `App`.
 /// Deinitialize it with `deinit`.
-pub fn init(allocator: std.mem.Allocator, plugin: Plugin) !Self {
+pub fn init(allocator: std.mem.Allocator, plugin: root.Plugin) !Self {
     var self = Self{
         .allocator = allocator,
-        .registry = try ecs.Registry.init(allocator),
+        .registry = try root.Registry.init(allocator),
     };
 
     errdefer self.deinit();
@@ -72,7 +41,7 @@ pub fn deinit(self: *Self) void {
 pub fn run(self: *Self) !void {
     while (!self.is_exit) {
         for (self.systems.items) |system_addr| {
-            const system: System = @ptrFromInt(system_addr);
+            const system: root.System = @ptrFromInt(system_addr);
             try system(self);
         }
     }
@@ -80,7 +49,7 @@ pub fn run(self: *Self) !void {
     for (0..self.deinit_systems.items.len) |index| {
         const i = self.deinit_systems.items.len - index - 1;
 
-        const system: DeinitSystem = @ptrFromInt(self.deinit_systems.items[i]);
+        const system: root.DeinitSystem = @ptrFromInt(self.deinit_systems.items[i]);
         system(self);
     }
 }
@@ -91,12 +60,12 @@ pub inline fn exit(self: *Self) void {
 }
 
 /// Spawns a new `Entity`.
-pub fn spawn(self: *Self) ecs.Entity {
+pub fn spawn(self: *Self) root.Entity {
     return self.registry.spawn();
 }
 
 /// Despawns `entity`.
-pub fn despawn(self: Self, entity: ecs.Entity) void {
+pub fn despawn(self: Self, entity: root.Entity) void {
     self.registry.despawn(entity);
 
     for (self.tags.values()) |*entity_list| {
@@ -112,22 +81,22 @@ pub fn despawn(self: Self, entity: ecs.Entity) void {
 }
 
 /// Returns the `Component` of `entity`.
-pub fn getComponent(self: Self, entity: ecs.Entity, comptime Component: type) ?Component {
+pub fn getComponent(self: Self, entity: root.Entity, comptime Component: type) ?Component {
     return self.registry.getComponent(entity, Component);
 }
 
 /// Returns a pointer to the `Component` of `entity`.
-pub fn getComponentPtr(self: Self, entity: ecs.Entity, comptime Component: type) ?*Component {
+pub fn getComponentPtr(self: Self, entity: root.Entity, comptime Component: type) ?*Component {
     return self.registry.getComponentPtr(entity, Component);
 }
 
 /// Adds `component` to `entity`.
-pub fn addComponent(self: *Self, entity: ecs.Entity, component: anytype) !void {
+pub fn addComponent(self: *Self, entity: root.Entity, component: anytype) !void {
     try self.registry.addComponent(entity, component);
 }
 
 /// Adds `bundle` to `entity`.
-pub fn addBundle(self: *Self, entity: ecs.Entity, bundle: anytype) !void {
+pub fn addBundle(self: *Self, entity: root.Entity, bundle: anytype) !void {
     const Bundle = @TypeOf(bundle);
     const bundle_info = @typeInfo(Bundle);
 
@@ -144,13 +113,13 @@ pub fn addBundle(self: *Self, entity: ecs.Entity, bundle: anytype) !void {
 
 /// Returns a `Query` that filters entities depending on the components
 /// they have or not.
-pub fn query(self: Self, comptime includes: anytype, comptime excludes: anytype) ecs.Query(includes, excludes) {
+pub fn query(self: Self, comptime includes: anytype, comptime excludes: anytype) root.Query(includes, excludes) {
     return self.registry.query(includes, excludes);
 }
 
 /// Returns the first `Entity` depending on the components they have or not.
 /// If the such entity does not exist, returns `null`.
-pub inline fn getFirst(self: Self, comptime includes: anytype, comptime excludes: anytype) ?ecs.Entity {
+pub inline fn getFirst(self: Self, comptime includes: anytype, comptime excludes: anytype) ?root.Entity {
     var query_ = self.query(includes, excludes);
     return query_.next();
 }

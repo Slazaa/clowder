@@ -1,17 +1,14 @@
-const math = @import("clowder_math");
-const render = @import("clowder_render");
-
 const root = @import("../root.zig");
 
 const Self = @This();
 
-camera: render.Camera,
+camera: root.Camera,
 
-pub fn init(size: math.Vec2u) Self {
+pub fn init(size: root.Vec2u) Self {
     return .{
         .camera = .{
-            .viewport = render.Viewport.default,
-            .projection = math.mat.orthographicRhNo(
+            .viewport = root.Viewport.default,
+            .projection = root.mat.orthographicRhNo(
                 -@as(f32, @floatFromInt(size[0] / 2)),
                 @as(f32, @floatFromInt(size[0] / 2)),
                 -@as(f32, @floatFromInt(size[1] / 2)),

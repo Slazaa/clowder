@@ -27,6 +27,7 @@ fn initSystem(app: *clw.App) !void {
             clw.Color.green,
             clw.Color.blue,
         },
+        // This is used when dealing with textures.
         &.{
             .{ 0.0, 0.0 },
             .{ 1.0, 0.0 },

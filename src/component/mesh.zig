@@ -1,14 +1,14 @@
 const std = @import("std");
 
-const render = @import("clowder_render");
-const math = @import("clowder_math");
+const root = @import("../root.zig");
 
-pub fn Mesh(comptime config: render.RendererConfig) type {
+/// A `Mesh` represent collection of vertices.
+pub fn Mesh(comptime config: root.RendererConfig) type {
     return struct {
         const Self = @This();
 
-        const Renderer = render.Renderer(config);
-        const RenderObject = render.RenderObject(config.render_backend);
+        const Renderer = root.Renderer(config);
+        const RenderObject = root.RenderObject(config.render_backend);
 
         positions: std.ArrayList(f32),
         colors: std.ArrayList(f32),
@@ -18,12 +18,14 @@ pub fn Mesh(comptime config: render.RendererConfig) type {
 
         render_object: RenderObject,
 
+        /// Initializes a new `Mesh`.
+        /// Deinitialize it with `deinit`.
         pub fn init(
             allocator: std.mem.Allocator,
-            positions: []const math.Vec3f,
-            colors: []const render.Color,
-            uv_coords: []const math.Vec2f,
-            indices: []const math.Vec3u,
+            positions: []const root.Vec3f,
+            colors: []const root.Color,
+            uv_coords: []const root.Vec2f,
+            indices: []const root.Vec3u,
         ) !Self {
             var position_list = std.ArrayList(f32).init(allocator);
             errdefer position_list.deinit();
@@ -49,7 +51,7 @@ pub fn Mesh(comptime config: render.RendererConfig) type {
                 const color = if (i < colors.len)
                     colors[i]
                 else
-                    render.Color.white;
+                    root.Color.white;
 
                 try color_list.append(color.red);
                 try color_list.append(color.green);
@@ -89,6 +91,7 @@ pub fn Mesh(comptime config: render.RendererConfig) type {
             };
         }
 
+        /// Deinitilizes the `Mesh`.
         pub fn deinit(self: Self) void {
             self.indices.deinit();
 
