@@ -211,7 +211,6 @@ pub const Base = struct {
         material: opengl.Material,
         camera: root.Camera,
         transform: root.Transform,
-        texture: ?opengl.Texture,
     ) void {
         material.select();
 
@@ -228,7 +227,7 @@ pub const Base = struct {
             self.window_context.base.getSize(),
             camera.viewport,
             self.default_texture,
-            texture,
+            material.texture,
         );
     }
 };

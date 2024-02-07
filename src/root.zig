@@ -9,8 +9,25 @@ pub const window = @import("clowder_window");
 pub usingnamespace ecs;
 pub usingnamespace image;
 pub usingnamespace math;
-pub usingnamespace render;
 pub usingnamespace window;
+
+pub const Camera = render.Camera;
+pub const Color = render.Color;
+pub const DefaultRenderMaterial = render.DefaultMaterial;
+pub const DefaultShader = render.DefaultShader;
+pub const DefaultTexture = render.DefaultTexture;
+pub const RenderBackend = render.Backend;
+pub const RenderMaterial = render.Material;
+pub const Renderer = render.Renderer;
+pub const RendererConfig = render.RendererConfig;
+pub const RendererContext = render.RendererContext;
+pub const RenderObject = render.RenderObject;
+pub const Shader = render.Shader;
+pub const Texture = render.Texture;
+pub const Transform = render.Transform;
+pub const Viewport = render.Viewport;
+
+pub const default_render_backend = render.default_backend;
 
 pub const App = @import("App.zig");
 

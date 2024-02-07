@@ -105,7 +105,7 @@ pub fn addBundle(self: *Self, entity: root.Entity, bundle: anytype) !void {
     }
 
     if (!@hasDecl(Bundle, "build")) {
-        @compileError("Bundles require a build fonction, but '" ++ @typeName(Bundle) ++ "' doesn't have one");
+        @compileError("Bundles require a 'build' function, but '" ++ @typeName(Bundle) ++ "' doesn't have one");
     }
 
     try bundle.build(self, entity);

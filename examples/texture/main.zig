@@ -3,19 +3,19 @@ const std = @import("std");
 const clw = @import("clowder");
 
 fn initSystem(app: *clw.App) !void {
-    const rect = app.spawn();
-
-    const rect_bundle = try clw.bundle.Rectangle(.{}).init(
-        app.allocator,
-        .{ 256, 256 },
-    );
-
-    try app.addBundle(rect, rect_bundle);
+    const sprite = app.spawn();
 
     const image = try clw.loadImage(app.allocator, "examples/texture/example.png");
     defer image.deinit();
 
-    try app.addComponent(rect, clw.DefaultTexture.initFromImage(image, .nearest));
+    try app.addBundle(
+        sprite,
+        try clw.bundle.Sprite(.{}).init(
+            app.allocator,
+            .{ 256, 256 },
+            .{ .texture = clw.DefaultTexture.initFromImage(image, .nearest) },
+        ),
+    );
 }
 
 pub fn main() !void {

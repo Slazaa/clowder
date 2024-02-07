@@ -3,7 +3,7 @@ const std = @import("std");
 const root = @import("../root.zig");
 
 pub const DefaultShader = struct { root.DefaultShader };
-pub const DefaultMaterial = struct { root.DefaultMaterial };
+pub const DefaultRenderMaterial = struct { root.DefaultRenderMaterial };
 
 pub fn initWindowSystem(app: *root.App) !void {
     const main_window = app.spawn();
@@ -35,9 +35,56 @@ pub fn initCameraSystem(app: *root.App) !void {
 }
 
 pub fn initDefaultShaderSystem(app: *root.App) !void {
+    const vertex_shader_source =
+        \\#version 450 core
+        \\
+        \\layout(location = 0) in vec3 aPosition;
+        \\layout(location = 1) in vec4 aColor;
+        \\layout(location = 2) in vec2 aUvCoords;
+        \\
+        \\out vec4 fColor;
+        \\out vec2 fUvCoords;
+        \\
+        \\uniform mat4 uTransform;
+        \\
+        \\void main() {
+        \\    gl_Position = uTransform * vec4(aPosition, 1.0f);
+        \\
+        \\    fColor = aColor;
+        \\    fUvCoords = aUvCoords;
+        \\}
+    ;
+
+    const fragment_shader_source =
+        \\#version 450 core
+        \\
+        \\in vec4 fColor;
+        \\in vec2 fUvCoords;
+        \\
+        \\out vec4 color;
+        \\
+        \\uniform vec4 uColor;
+        \\uniform sampler2D uTexture;
+        \\
+        \\void main() {
+        \\    color = texture(uTexture, fUvCoords) * fColor * uColor;
+        \\}
+    ;
+
     const shader_entity = app.spawn();
 
-    const shader = try root.DefaultShader.default();
+    var shader_report = std.ArrayList(u8).init(app.allocator);
+    defer shader_report.deinit();
+
+    const shader = root.DefaultShader.fromSources(
+        vertex_shader_source,
+        fragment_shader_source,
+        &shader_report,
+    ) catch |err| {
+        std.log.err("{s}", .{shader_report.items});
+        return err;
+    };
+
     try app.addComponent(shader_entity, DefaultShader{shader});
 }
 
@@ -47,8 +94,8 @@ pub fn initDefaultMaterialSystem(app: *root.App) !void {
 
     const material_entity = app.spawn();
 
-    const material = root.DefaultMaterial.init(default_shader, null, null);
-    try app.addComponent(material_entity, DefaultMaterial{material});
+    const material = root.DefaultRenderMaterial.init(default_shader, null, null);
+    try app.addComponent(material_entity, DefaultRenderMaterial{material});
 }
 
 pub fn deinitSystem(app: *root.App) void {
@@ -70,9 +117,9 @@ pub fn deinitSystem(app: *root.App) void {
     }
 }
 
-pub fn system(app: *root.App) !void {
-    const default_material_entity = app.getFirst(.{DefaultMaterial}, .{}).?;
-    const default_material = app.getComponent(default_material_entity, DefaultMaterial).?[0];
+pub fn renderSystem(app: *root.App) !void {
+    const default_render_material_entity = app.getFirst(.{DefaultRenderMaterial}, .{}).?;
+    const default_render_material = app.getComponent(default_render_material_entity, DefaultRenderMaterial).?[0];
 
     const window_entity = app.getFirst(.{ root.DefaultWindow, root.Renderer(.{}) }, .{}).?;
 
@@ -98,10 +145,22 @@ pub fn system(app: *root.App) !void {
             const mesh = app.getComponent(mesh_entity, root.Mesh(.{})).?;
 
             const transform = app.getComponent(mesh_entity, root.Transform) orelse root.Transform.default;
-            const material = app.getComponent(mesh_entity, root.DefaultMaterial) orelse default_material;
-            const texture = app.getComponent(mesh_entity, root.DefaultTexture);
 
-            renderer.render(mesh.render_object, material, camera, transform, texture);
+            const render_material = blk: {
+                const material = app.getComponent(mesh_entity, root.DefaultMaterial) orelse {
+                    break :blk default_render_material;
+                };
+
+                const shader = material.shader orelse default_render_material.shader;
+
+                break :blk root.DefaultRenderMaterial{
+                    .shader = shader,
+                    .color = material.color,
+                    .texture = material.texture,
+                };
+            };
+
+            renderer.render(mesh.render_object, render_material, camera, transform);
         }
     }
 
@@ -116,5 +175,5 @@ pub const plugin = root.Plugin{
         initDefaultMaterialSystem,
     },
     .deinitSystems = &.{deinitSystem},
-    .systems = &.{system},
+    .systems = &.{renderSystem},
 };

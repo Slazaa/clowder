@@ -73,6 +73,9 @@ var app = try clw.init(allocator, .{
 });
 
 defer app.deinit();
+
+// Don't forget to run the `App`!
+try app.run();
 ```
 
 That's it! Now you know what ECS is.
