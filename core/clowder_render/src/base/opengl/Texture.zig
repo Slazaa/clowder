@@ -12,17 +12,21 @@ pub const FilterType = enum {
     linear,
 };
 
+pub const Config = struct {
+    filter_type: FilterType = .nearest,
+};
+
 native: nat.GLuint,
 size: math.Vec2u,
 
-pub fn initRaw(data: []const u8, size: math.Vec2u, filter_type: FilterType) Self {
+pub fn initRaw(data: []const u8, size: math.Vec2u, config: Config) Self {
     var native: nat.GLuint = undefined;
 
     nat.glGenTextures(1, @ptrCast(&native));
     nat.glActiveTexture(nat.GL_TEXTURE0);
     nat.glBindTexture(nat.GL_TEXTURE_2D, native);
 
-    const native_filter_type: nat.GLint = switch (filter_type) {
+    const native_filter_type: nat.GLint = switch (config.filter_type) {
         .nearest => nat.GL_NEAREST,
         .linear => nat.GL_LINEAR,
     };
@@ -51,10 +55,10 @@ pub fn initRaw(data: []const u8, size: math.Vec2u, filter_type: FilterType) Self
     };
 }
 
-pub fn initFromImage(image: image_.Image, filter_type: FilterType) Self {
-    return initRaw(image.data.items, image.size, filter_type);
+pub fn initFromImage(image: image_.Image, config: Config) Self {
+    return initRaw(image.data.items, image.size, config);
 }
 
 pub fn default() Self {
-    return initRaw(&(.{std.math.maxInt(u8)} ** 4), .{ 1, 1 }, .nearest);
+    return initRaw(&(.{std.math.maxInt(u8)} ** 4), .{ 1, 1 }, .{});
 }

@@ -14,9 +14,13 @@ pub fn Sprite(comptime config: root.RendererConfig) type {
 
         pub fn init(allocator: std.mem.Allocator, size: root.Vec2f, material: Material) !Self {
             return .{
-                .rectangle = try Rectangle.init(allocator, size),
+                .rectangle = try Rectangle.init(allocator, size, null),
                 .material = material,
             };
+        }
+
+        pub fn deinit(self: Self) void {
+            self.rectangle.deinit();
         }
 
         pub fn build(self: Self, app: *root.App, entity: root.Entity) !void {

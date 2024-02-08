@@ -29,7 +29,7 @@ pub const Image = struct {
     }
 };
 
-pub fn loadImage(allocator: std.mem.Allocator, path: []const u8) !Image {
+pub fn loadImageFromFile(allocator: std.mem.Allocator, path: []const u8) !Image {
     const img_image = try img.Image.fromFilePath(allocator, path);
 
     const image = Image{

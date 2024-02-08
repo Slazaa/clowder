@@ -43,7 +43,12 @@ pub const WGL_STENCIL_BITS_ARB = 0x2023;
 pub const WGL_SUPPORT_OPENGL_ARB = 0x2010;
 pub const WGL_TYPE_RGBA_ARB = 0x202B;
 
+pub const WM_CLOSE = 0x0010;
+pub const WM_KEYDOWN = 0x0100;
+pub const WM_KEYUP = 0x0101;
 pub const WM_QUIT = 0x0012;
+
+pub const VK_SPACE = 0x20;
 
 pub const WS_CAPTION = 0x000C_0000;
 pub const WS_MAXIMIZEBOX = 0x0001_0000;
@@ -189,8 +194,6 @@ pub const WNDCLASSEXA = struct_tagWNDCLASSEXA;
 pub const PWNDCLASSEXA = *struct_tagWNDCLASSEXA;
 pub const NPWNDCLASSEXA = *struct_tagWNDCLASSEXA;
 pub const LPWNDCLASSEXA = *struct_tagWNDCLASSEXA;
-
-pub const WM_CLOSE = 0x0010;
 
 pub extern fn ChoosePixelFormat(hdc: HDC, ppfd: ?*const PIXELFORMATDESCRIPTOR) c_int;
 pub extern fn CreateWindowExA(dwExStyle: DWORD, lpClassName: LPCSTR, lpWindowName: LPCSTR, dwStyle: DWORD, X: c_int, Y: c_int, nWidth: c_int, nHeight: c_int, hWndParent: HWND, hMenu: HMENU, hInstance: HINSTANCE, lpParam: LPVOID) HWND;
