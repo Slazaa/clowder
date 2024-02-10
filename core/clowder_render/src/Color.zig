@@ -1,3 +1,6 @@
+//! A struct representing a color.
+//! Values are between `0` and `1`.
+
 const Self = @This();
 
 pub const white = Self.rgb(1, 1, 1);

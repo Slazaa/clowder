@@ -171,7 +171,7 @@ pub fn Window(comptime backend: root.Backend) type {
         fn clearEvents(self: *Self) void {
             var i: usize = 0;
 
-            while (i != self.events.items.len) {
+            while (i < self.events.items.len) {
                 const event = &self.events.items[i];
 
                 const key = switch (event.*) {
@@ -183,7 +183,7 @@ pub fn Window(comptime backend: root.Backend) type {
                 };
 
                 if (key.state == .released) {
-                    _ = self.events.orderedRemove(i);
+                    const key_ = self.events.orderedRemove(i).key;
 
                     var j: usize = 0;
 
@@ -198,7 +198,7 @@ pub fn Window(comptime backend: root.Backend) type {
                             },
                         };
 
-                        if (sub_key.code != key.code or sub_key.state != .down) {
+                        if (sub_key.code != key_.code or sub_key.state != .down) {
                             j += 1;
                             continue;
                         }
