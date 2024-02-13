@@ -6,7 +6,7 @@ A simple, ECS based engine for graphical applications.
 
 ## Mindset 🧠
 I want to keep Clowder simple, and I want the source code to be easy to read.
-That's why the I try to use a lot of comments. I also want to emphasize on the
+That's why I try to use a lot of comments. I also want to emphasize on the
 use of examples, which I hope could be the main source of documentation.
 
 I do not plan on adding a GUI for Clowder. I think it would go against that
@@ -74,7 +74,7 @@ var app = try clw.init(allocator, .{
 
 defer app.deinit();
 
-// Don't forget to run the `App`!
+// Don't forget to run the app!
 try app.run();
 ```
 
