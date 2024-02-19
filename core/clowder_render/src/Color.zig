@@ -3,12 +3,15 @@
 
 const Self = @This();
 
-pub const white = Self.rgb(1, 1, 1);
-pub const black = Self.rgb(0, 0, 0);
-
-pub const red = Self.rgb(1, 0, 0);
-pub const green = Self.rgb(0, 1, 0);
-pub const blue = Self.rgb(0, 0, 1);
+pub const black = rgb(0, 0, 0);
+pub const blue = rgb(0, 0, 1);
+pub const cyan = rgb(0, 1, 1);
+pub const green = rgb(0, 1, 0);
+pub const orange = rgb(1, 0.5, 0);
+pub const pink = rgb(1, 0, 1);
+pub const red = rgb(1, 0, 0);
+pub const white = rgb(1, 1, 1);
+pub const yellow = rgb(1, 1, 0);
 
 red: f32,
 green: f32,

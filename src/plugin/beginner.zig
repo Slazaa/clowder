@@ -117,14 +117,28 @@ pub fn deinitSystem(app: *root.App) void {
     }
 }
 
-pub fn renderSystem(app: *root.App) !void {
-    const default_render_material_entity = app.getFirst(.{DefaultRenderMaterial}, .{}).?;
-    const default_render_material = app.getComponent(default_render_material_entity, DefaultRenderMaterial).?[0];
+fn transformFromEntity(app: *root.App, entity: root.Entity) root.Transform {
+    var maybe_current_entity: ?root.Entity = entity;
+    var result = root.Transform.default;
 
+    while (maybe_current_entity) |current_entity| {
+        const transform = app.getComponent(entity, root.Transform) orelse root.Transform.default;
+        result = root.Transform.combine(result, transform);
+
+        maybe_current_entity = app.getParent(current_entity);
+    }
+
+    return result;
+}
+
+pub fn renderSystem(app: *root.App) !void {
     const window_entity = app.getFirst(.{ root.DefaultWindow, root.Renderer(.{}) }, .{}).?;
 
     const window = app.getComponentPtr(window_entity, root.DefaultWindow).?;
     const renderer = app.getComponent(window_entity, root.Renderer(.{})).?;
+
+    const default_render_material_entity = app.getFirst(.{DefaultRenderMaterial}, .{}).?;
+    const default_render_material = app.getComponent(default_render_material_entity, DefaultRenderMaterial).?[0];
 
     try window.update();
 
@@ -139,28 +153,62 @@ pub fn renderSystem(app: *root.App) !void {
     while (camera_query.next()) |camera_entity| {
         const camera = app.getComponent(camera_entity, root.Camera).?;
 
-        var mesh_query = app.query(.{root.Mesh(.{})}, .{});
+        { // Tilemaps
+            var tilemap_query = app.query(.{root.Tilemap(.{})}, .{});
 
-        while (mesh_query.next()) |mesh_entity| {
-            const mesh = app.getComponent(mesh_entity, root.Mesh(.{})).?;
+            while (tilemap_query.next()) |tilemap_entity| {
+                const tilemap = app.getComponent(tilemap_entity, root.Tilemap(.{})).?;
 
-            const transform = app.getComponent(mesh_entity, root.Transform) orelse root.Transform.default;
+                const total_tilemap_size = tilemap.tile_size * tilemap.size;
+                const tilemap_transform = transformFromEntity(app, tilemap_entity);
 
-            const render_material = blk: {
-                const material = app.getComponent(mesh_entity, root.DefaultMaterial) orelse {
-                    break :blk default_render_material;
+                for (tilemap.tiles.items, 0..tilemap.tiles.items.len) |maybe_sprite, i| {
+                    const sprite = maybe_sprite orelse continue;
+
+                    const pos = root.Vec2f{
+                        @mod(@as(f32, @floatFromInt(i)), tilemap.size[0]),
+                        @divFloor(@as(f32, @floatFromInt(i)), tilemap.size[0]),
+                    };
+
+                    const tile_position = root.Vec2f{ tilemap_transform.position[0], tilemap_transform.position[1] } +
+                        pos * tilemap.tile_size -
+                        total_tilemap_size / @as(root.Vec2f, @splat(2));
+
+                    const tile_transform = root.Transform.init(
+                        .{ tile_position[0], tile_position[1], 0 },
+                        tilemap_transform.scale,
+                        tilemap_transform.rotation,
+                    );
+
+                    renderer.render(sprite.rectangle.mesh.render_object, sprite.material, camera, tile_transform);
+                }
+            }
+        }
+
+        { // Meshes
+            var mesh_query = app.query(.{root.Mesh(.{})}, .{});
+
+            while (mesh_query.next()) |mesh_entity| {
+                const mesh = app.getComponent(mesh_entity, root.Mesh(.{})).?;
+
+                const transform = transformFromEntity(app, mesh_entity);
+
+                const render_material = blk: {
+                    const material = app.getComponent(mesh_entity, root.DefaultMaterial) orelse {
+                        break :blk default_render_material;
+                    };
+
+                    const shader = material.shader orelse default_render_material.shader;
+
+                    break :blk root.DefaultRenderMaterial{
+                        .shader = shader,
+                        .color = material.color,
+                        .texture = material.texture,
+                    };
                 };
 
-                const shader = material.shader orelse default_render_material.shader;
-
-                break :blk root.DefaultRenderMaterial{
-                    .shader = shader,
-                    .color = material.color,
-                    .texture = material.texture,
-                };
-            };
-
-            renderer.render(mesh.render_object, render_material, camera, transform);
+                renderer.render(mesh.render_object, render_material, camera, transform);
+            }
         }
     }
 

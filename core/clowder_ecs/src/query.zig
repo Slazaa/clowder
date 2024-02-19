@@ -47,19 +47,29 @@ pub fn Query(comptime includes: anytype, comptime excludes: anytype) type {
     return struct {
         const Self = @This();
 
+        fn PredicateLists(length: usize) type {
+            if (length != 0) {
+                return struct {
+                    entity_lists: [length - 1][]const Entity,
+                    base_entity_list: []const Entity,
+                };
+            } else {
+                return struct {};
+            }
+        }
+
+        const IncludesLists = PredicateLists(includes.len);
+        const ExcludesLists = PredicateLists(excludes.len);
+
         registry: Registry,
 
-        include_entity_lists: [includes.len - 1][]const Entity,
-        include_base_entity_list: []const Entity,
-
-        exclude_entity_lists: [includes.len - 1][]const Entity,
-        exclude_base_entity_list: []const Entity,
+        includes_lists: IncludesLists,
+        excludes_lists: ExcludesLists,
 
         index: usize = 0,
 
         pub fn init(registry: Registry) Self {
-            var include_entity_lists: [includes.len - 1][]const Entity = undefined;
-            var include_base_entity_list: []const Entity = undefined;
+            var includes_lists: IncludesLists = undefined;
 
             inline for (includes, 0..) |Include, i| {
                 const entity_list: []const Entity = if (registry.getStorage(Include)) |storage|
@@ -68,17 +78,16 @@ pub fn Query(comptime includes: anytype, comptime excludes: anytype) type {
                     &.{};
 
                 if (i == 0) {
-                    include_base_entity_list = entity_list;
-                } else if (entity_list.len < include_base_entity_list.len) {
-                    include_entity_lists[i - 1] = include_base_entity_list;
-                    include_base_entity_list = entity_list;
+                    includes_lists.base_entity_list = entity_list;
+                } else if (entity_list.len < includes_lists.base_entity_list.len) {
+                    includes_lists.entity_lists[i - 1] = includes_lists.base_entity_list;
+                    includes_lists.base_entity_list = entity_list;
                 } else {
-                    include_entity_lists[i - 1] = entity_list;
+                    includes_lists.entity_lists[i - 1] = entity_list;
                 }
             }
 
-            var exclude_entity_lists: [includes.len - 1][]const Entity = undefined;
-            var exclude_base_entity_list: []const Entity = undefined;
+            var excludes_lists: ExcludesLists = undefined;
 
             inline for (excludes, 1..) |Exclude, i| {
                 const entity_list: []const Entity = if (registry.getStorage(Exclude)) |storage|
@@ -86,37 +95,34 @@ pub fn Query(comptime includes: anytype, comptime excludes: anytype) type {
                 else |_|
                     &.{};
 
-                if (entity_list.len < exclude_base_entity_list.len) {
-                    exclude_entity_lists[i - 1] = exclude_base_entity_list;
-                    exclude_base_entity_list = entity_list;
+                if (entity_list.len < excludes_lists.base_entity_list.len) {
+                    excludes_lists.entity_lists[i - 1] = excludes_lists.base_entity_list;
+                    excludes_lists.base_entity_list = entity_list;
                 } else {
-                    exclude_entity_lists[i - 1] = entity_list;
+                    excludes_lists.entity_lists[i - 1] = entity_list;
                 }
             }
 
             return .{
                 .registry = registry,
 
-                .include_entity_lists = include_entity_lists,
-                .include_base_entity_list = include_base_entity_list,
-
-                .exclude_entity_lists = exclude_entity_lists,
-                .exclude_base_entity_list = exclude_base_entity_list,
+                .includes_lists = includes_lists,
+                .excludes_lists = excludes_lists,
             };
         }
 
         /// Returns the next `Entity` in the `Query`.
         /// TODO: Excludes not implemented yet.
         pub fn next(self: *Self) ?Entity {
-            if (self.include_base_entity_list.len == 0 or
-                self.index >= self.include_base_entity_list.len)
+            if (self.includes_lists.base_entity_list.len == 0 or
+                self.index >= self.includes_lists.base_entity_list.len)
             {
                 return null;
             }
 
-            const entity = self.include_base_entity_list[self.index];
+            const entity = self.includes_lists.base_entity_list[self.index];
 
-            const incl_valid = for (self.include_entity_lists) |entity_list| {
+            const incl_valid = for (self.includes_lists.entity_lists) |entity_list| {
                 if (!std.mem.containsAtLeast(Entity, entity_list, 1, &.{entity})) {
                     break false;
                 }

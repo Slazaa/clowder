@@ -19,3 +19,11 @@ pub fn init(position: math.Vec3f, scale: math.Vec3f, rotation: math.Vec3f) Self 
         .rotation = rotation,
     };
 }
+
+pub fn combine(first: Self, second: Self) Self {
+    return init(
+        first.position + second.position,
+        first.scale * second.scale,
+        first.rotation + second.rotation,
+    );
+}

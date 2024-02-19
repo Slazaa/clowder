@@ -12,6 +12,8 @@ registry: root.Registry,
 deinit_systems: std.ArrayListUnmanaged(SystemAddr) = std.ArrayListUnmanaged(SystemAddr){},
 systems: std.ArrayListUnmanaged(SystemAddr) = std.ArrayListUnmanaged(SystemAddr){},
 
+entities_parents: std.AutoArrayHashMapUnmanaged(root.Entity, root.Entity) = std.AutoArrayHashMapUnmanaged(root.Entity, root.Entity){},
+
 is_exit: bool = false,
 
 /// Initiliazes a new `App`.
@@ -31,6 +33,8 @@ pub fn init(allocator: std.mem.Allocator, plugin: root.Plugin) !Self {
 
 /// Deinitializes the `App`.
 pub fn deinit(self: *Self) void {
+    self.entities_parents.deinit(self.allocator);
+
     self.systems.deinit(self.allocator);
     self.deinit_systems.deinit(self.allocator);
 
@@ -109,6 +113,23 @@ pub fn addBundle(self: *Self, entity: root.Entity, bundle: anytype) !void {
     }
 
     try bundle.build(self, entity);
+}
+
+/// Adds a child `child` to `entity`.
+pub fn addChild(self: *Self, entity: root.Entity, child: root.Entity) !bool {
+    if (self.entities_parents.contains(child)) {
+        return false;
+    }
+
+    try self.entities_parents.put(child, entity);
+
+    return true;
+}
+
+/// Returns the `entity` parent if there is one.
+/// Else returns `null`.
+pub inline fn getParent(self: *Self, entity: root.Entity) ?root.Entity {
+    return self.entities_parents.get(entity);
 }
 
 /// Returns a `Query` that filters entities depending on the components
