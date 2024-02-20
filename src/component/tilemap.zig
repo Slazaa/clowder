@@ -10,10 +10,10 @@ pub fn Tilemap(comptime config: root.RendererConfig) type {
 
         tiles: std.ArrayList(?Sprite),
         tile_size: root.Vec2f,
-        size: root.Vec2f,
+        size: root.Vec2u,
 
-        pub fn init(allocator: std.mem.Allocator, tile_size: root.Vec2f, size: root.Vec2f) !Self {
-            const tiles = try std.ArrayList(Sprite).initCapacity(allocator, size[0] * size[1]);
+        pub fn init(allocator: std.mem.Allocator, tile_size: root.Vec2f, size: root.Vec2u) !Self {
+            var tiles = try std.ArrayList(?Sprite).initCapacity(allocator, size[0] * size[1]);
             errdefer tiles.deinit();
 
             try tiles.appendNTimes(null, size[0] * size[1]);
@@ -26,6 +26,11 @@ pub fn Tilemap(comptime config: root.RendererConfig) type {
         }
 
         pub fn deinit(self: Self) void {
+            for (self.tiles.items) |maybe_sprite| {
+                const sprite = maybe_sprite orelse continue;
+                sprite.deinit();
+            }
+
             self.tiles.deinit();
         }
 
@@ -42,11 +47,6 @@ pub fn Tilemap(comptime config: root.RendererConfig) type {
         pub inline fn set(self: Self, position: root.Vec2u, sprite: Sprite) !void {
             const index = try self.indexFromPos(position);
             self.tiles.items[index] = sprite;
-        }
-
-        pub inline fn get(self: Self, position: root.Vec2u) !?Sprite {
-            const index = try self.indexFromPos(position);
-            return self.tiles.items[index];
         }
     };
 }

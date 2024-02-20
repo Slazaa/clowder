@@ -6,7 +6,6 @@ pub fn Material(comptime render_backend: root.RenderBackend) type {
 
         const Shader = root.Shader(render_backend);
         const Texture = root.Texture(render_backend);
-        const RenderMaterial = root.RenderMaterial(render_backend);
 
         shader: ?Shader = null,
         color: ?root.Color = null,

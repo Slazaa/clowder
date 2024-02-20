@@ -114,6 +114,13 @@ pub fn deinitSystem(app: *root.App) void {
             const mesh = app.getComponent(mesh_entity, root.Mesh(.{})).?;
             mesh.deinit();
         }
+
+        var tilemap_query = app.query(.{root.Tilemap(.{})}, .{});
+
+        while (tilemap_query.next()) |tilemap_entity| {
+            const tilemap = app.getComponent(tilemap_entity, root.Tilemap(.{})).?;
+            tilemap.deinit();
+        }
     }
 }
 
@@ -159,15 +166,29 @@ pub fn renderSystem(app: *root.App) !void {
             while (tilemap_query.next()) |tilemap_entity| {
                 const tilemap = app.getComponent(tilemap_entity, root.Tilemap(.{})).?;
 
-                const total_tilemap_size = tilemap.tile_size * tilemap.size;
+                const total_tilemap_size = tilemap.tile_size * @as(root.Vec2f, @floatFromInt(tilemap.size));
                 const tilemap_transform = transformFromEntity(app, tilemap_entity);
+
+                const render_material = blk: {
+                    const material = app.getComponent(tilemap_entity, root.DefaultMaterial) orelse {
+                        break :blk default_render_material;
+                    };
+
+                    const shader = material.shader orelse default_render_material.shader;
+
+                    break :blk root.DefaultRenderMaterial{
+                        .shader = shader,
+                        .color = material.color,
+                        .texture = material.texture,
+                    };
+                };
 
                 for (tilemap.tiles.items, 0..tilemap.tiles.items.len) |maybe_sprite, i| {
                     const sprite = maybe_sprite orelse continue;
 
                     const pos = root.Vec2f{
-                        @mod(@as(f32, @floatFromInt(i)), tilemap.size[0]),
-                        @divFloor(@as(f32, @floatFromInt(i)), tilemap.size[0]),
+                        @floatFromInt(@mod(i, tilemap.size[0])),
+                        @floatFromInt(@divFloor(i, tilemap.size[0])),
                     };
 
                     const tile_position = root.Vec2f{ tilemap_transform.position[0], tilemap_transform.position[1] } +
@@ -180,7 +201,7 @@ pub fn renderSystem(app: *root.App) !void {
                         tilemap_transform.rotation,
                     );
 
-                    renderer.render(sprite.rectangle.mesh.render_object, sprite.material, camera, tile_transform);
+                    renderer.render(sprite.rectangle.mesh.render_object, render_material, camera, tile_transform);
                 }
             }
         }
