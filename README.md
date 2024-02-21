@@ -2,7 +2,7 @@
 > [!WARNING]
 > This project is still in early developpment.
 
-A simple, ECS based engine for graphical applications.
+A simple, ECS based framework for graphical applications.
 
 ## Mindset 🧠
 I want to keep Clowder simple, and I want the source code to be easy to read.

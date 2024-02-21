@@ -5,12 +5,7 @@ const clw = @import("clowder");
 pub const PieceKind = enum { i, j, l, o, s, t, z };
 
 fn initSystem(app: *clw.App) !void {
-    const grid = app.spawn();
-
-    const tilemap = try clw.Tilemap(.{}).init(app.allocator, .{ 50, 50 }, .{ 10, 20 });
-    errdefer tilemap.deinit();
-
-    try app.addComponent(grid, tilemap);
+    _ = app;
 }
 
 pub fn main() !void {
