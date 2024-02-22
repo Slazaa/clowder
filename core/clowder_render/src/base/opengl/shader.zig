@@ -5,10 +5,7 @@ const nat = @import("../../native/opengl.zig");
 pub const Shader = struct {
     const Self = @This();
 
-    const Type = enum {
-        vertex,
-        fragment,
-    };
+    const Type = enum { vertex, fragment };
 
     program: nat.GLuint,
 

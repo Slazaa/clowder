@@ -116,14 +116,12 @@ pub fn addBundle(self: *Self, entity: root.Entity, bundle: anytype) !void {
 }
 
 /// Adds a child `child` to `entity`.
-pub fn addChild(self: *Self, entity: root.Entity, child: root.Entity) !bool {
+pub fn addChild(self: *Self, entity: root.Entity, child: root.Entity) !void {
     if (self.entities_parents.contains(child)) {
-        return false;
+        return;
     }
 
-    try self.entities_parents.put(child, entity);
-
-    return true;
+    try self.entities_parents.put(self.allocator, child, entity);
 }
 
 /// Returns the `entity` parent if there is one.

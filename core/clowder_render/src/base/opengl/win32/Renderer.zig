@@ -205,13 +205,7 @@ pub const Base = struct {
         _ = win_nat.SwapBuffers(window_context.base.device_context);
     }
 
-    pub fn render(
-        self: Self,
-        render_object: opengl.RenderObject,
-        material: opengl.Material,
-        camera: root.Camera,
-        transform: root.Transform,
-    ) void {
+    pub fn render(self: Self, render_object: opengl.RenderObject, material: opengl.Material, camera: root.Camera, transform: root.Transform) void {
         material.select();
 
         var transform_matrix = math.Mat4x4f.identity;
@@ -226,8 +220,7 @@ pub const Base = struct {
             render_object,
             self.window_context.base.getSize(),
             camera.viewport,
-            self.default_texture,
-            material.texture,
+            material.texture orelse self.default_texture,
         );
     }
 };

@@ -91,6 +91,19 @@ pub fn Mesh(comptime config: root.RendererConfig) type {
             };
         }
 
+        /// Sets the UV coords of the `Mesh`.
+        pub fn setUvCoords(self: *Self, uv_coords: []const root.Vec2f) !void {
+            self.uv_coords.clearRetainingCapacity();
+
+            for (uv_coords) |uv| {
+                inline for (0..2) |i| {
+                    try self.uv_coords.append(uv[i]);
+                }
+            }
+
+            self.render_object.setUvCoords(self.uv_coords.items);
+        }
+
         /// Deinitilizes the `Mesh`.
         pub fn deinit(self: Self) void {
             self.indices.deinit();

@@ -17,13 +17,7 @@ pub fn clear(color: root.Color) void {
     nat.glClear(nat.GL_COLOR_BUFFER_BIT | nat.GL_DEPTH_BUFFER_BIT | nat.GL_STENCIL_BUFFER_BIT);
 }
 
-pub fn render(
-    render_object: RenderObject,
-    window_size: math.Vec2u,
-    viewport: root.Viewport,
-    default_texture: Texture,
-    texture: ?Texture,
-) void {
+pub fn render(render_object: RenderObject, window_size: math.Vec2u, viewport: root.Viewport, texture: Texture) void {
     nat.glViewport(
         @intFromFloat(viewport.position[0] * @as(f32, @floatFromInt(window_size[0]))),
         @intFromFloat(viewport.position[1] * @as(f32, @floatFromInt(window_size[1]))),
@@ -34,9 +28,5 @@ pub fn render(
     nat.glBindVertexArray(render_object.position_vbo);
     nat.glDrawElements(nat.GL_TRIANGLES, @intCast(render_object.vertices_count), nat.GL_UNSIGNED_INT, null);
 
-    if (texture) |texture_| {
-        nat.glBindTexture(nat.GL_TEXTURE_2D, texture_.native);
-    } else {
-        nat.glBindTexture(nat.GL_TEXTURE_2D, default_texture.native);
-    }
+    nat.glBindTexture(nat.GL_TEXTURE_2D, texture.native);
 }

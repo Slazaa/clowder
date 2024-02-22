@@ -13,6 +13,7 @@ fn initSystem(app: *clw.App) !void {
     const sprite_bundle = try clw.bundle.Sprite(.{}).init(
         app.allocator,
         .{ 256, 256 },
+        null,
         .{ .texture = clw.DefaultTexture.initFromImage(image, .{}) },
     );
 

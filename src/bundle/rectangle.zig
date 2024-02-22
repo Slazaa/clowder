@@ -41,9 +41,7 @@ pub fn Rectangle(comptime config: root.RendererConfig) type {
             errdefer mesh.deinit();
 
             const material: ?Material = if (color) |color_|
-                .{
-                    .color = color_,
-                }
+                .{ .color = color_ }
             else
                 null;
 

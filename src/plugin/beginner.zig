@@ -67,7 +67,13 @@ pub fn initDefaultShaderSystem(app: *root.App) !void {
         \\uniform sampler2D uTexture;
         \\
         \\void main() {
-        \\    color = texture(uTexture, fUvCoords) * fColor * uColor;
+        \\    vec4 texColor = texture(uTexture, fUvCoords) * fColor * uColor;
+        \\
+        \\    if (texColor.a < 0.1) {
+        \\        discard;
+        \\    }
+        \\
+        \\    color = texColor;
         \\}
     ;
 
@@ -98,7 +104,7 @@ pub fn initDefaultMaterialSystem(app: *root.App) !void {
     try app.addComponent(material_entity, DefaultRenderMaterial{material});
 }
 
-pub fn deinitSystem(app: *root.App) void {
+pub fn deinitWindowSystem(app: *root.App) void {
     var query = app.query(.{ root.DefaultWindow, root.Renderer(.{}) }, .{});
 
     while (query.next()) |entity| {
@@ -107,20 +113,15 @@ pub fn deinitSystem(app: *root.App) void {
 
         window.deinit();
         renderer.deinit();
+    }
+}
 
-        var mesh_query = app.query(.{root.Mesh(.{})}, .{});
+pub fn deinitMeshSystem(app: *root.App) void {
+    var mesh_query = app.query(.{root.Mesh(.{})}, .{});
 
-        while (mesh_query.next()) |mesh_entity| {
-            const mesh = app.getComponent(mesh_entity, root.Mesh(.{})).?;
-            mesh.deinit();
-        }
-
-        var tilemap_query = app.query(.{root.Tilemap(.{})}, .{});
-
-        while (tilemap_query.next()) |tilemap_entity| {
-            const tilemap = app.getComponent(tilemap_entity, root.Tilemap(.{})).?;
-            tilemap.deinit();
-        }
+    while (mesh_query.next()) |mesh_entity| {
+        const mesh = app.getComponent(mesh_entity, root.Mesh(.{})).?;
+        mesh.deinit();
     }
 }
 
@@ -129,7 +130,7 @@ fn transformFromEntity(app: *root.App, entity: root.Entity) root.Transform {
     var result = root.Transform.default;
 
     while (maybe_current_entity) |current_entity| {
-        const transform = app.getComponent(entity, root.Transform) orelse root.Transform.default;
+        const transform = app.getComponent(current_entity, root.Transform) orelse root.Transform.default;
         result = root.Transform.combine(result, transform);
 
         maybe_current_entity = app.getParent(current_entity);
@@ -195,6 +196,9 @@ pub const plugin = root.Plugin{
         initDefaultShaderSystem,
         initDefaultMaterialSystem,
     },
-    .deinitSystems = &.{deinitSystem},
+    .deinitSystems = &.{
+        deinitWindowSystem,
+        deinitMeshSystem,
+    },
     .systems = &.{renderSystem},
 };

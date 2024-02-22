@@ -60,5 +60,5 @@ pub fn initFromImage(image: image_.Image, config: Config) Self {
 }
 
 pub fn default() Self {
-    return initRaw(&(.{std.math.maxInt(u8)} ** 4), .{ 1, 1 }, .{});
+    return initRaw(&(.{std.math.maxInt(u8)} ** 4), @splat(1), .{});
 }

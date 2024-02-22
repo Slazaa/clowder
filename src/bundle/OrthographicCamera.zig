@@ -10,9 +10,9 @@ pub fn init(size: root.Vec2u) Self {
             .viewport = root.Viewport.default,
             .projection = root.mat.orthographicRhNo(
                 -@as(f32, @floatFromInt(size[0] / 2)),
-                @as(f32, @floatFromInt(size[0] / 2)),
+                @floatFromInt(size[0] / 2),
                 -@as(f32, @floatFromInt(size[1] / 2)),
-                @as(f32, @floatFromInt(size[1] / 2)),
+                @floatFromInt(size[1] / 2),
                 -1,
                 1,
             ),

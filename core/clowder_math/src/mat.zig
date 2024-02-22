@@ -7,11 +7,7 @@ const Vec2u = vec2.Vec2u;
 
 const Vec3f = vec3.Vec3f;
 
-pub fn Mat(
-    comptime T: type,
-    comptime m: usize,
-    comptime n: usize,
-) type {
+pub fn Mat(comptime T: type, comptime m: usize, comptime n: usize) type {
     return struct {
         const Self = @This();
 
@@ -157,10 +153,27 @@ pub fn translate(mat: Mat4x4f, vec: Vec3f) Mat4x4f {
 }
 
 pub fn orthographicRhNo(left: f32, right: f32, top: f32, bottom: f32, near: f32, far: f32) Mat4x4f {
+    const width = right - left;
+    const height = top - bottom;
+    const depth = near - far;
+
     return Mat4x4f.init(&.{
-        &.{ 2 / (right - left), 0, 0, 0 },
-        &.{ 0, 2 / (top - bottom), 0, 0 },
-        &.{ 0, 0, 2 / (near - far), 0 },
-        &.{ -(right + left) / (right - left), -(top + bottom) / (top - bottom), (near + far) / (near - far), 1 },
+        &.{ 2 / width, 0, 0, 0 },
+        &.{ 0, 2 / height, 0, 0 },
+        &.{ 0, 0, 1 / depth, 0 },
+        &.{ 0, 0, (1 / depth) * near, 1 },
+    });
+}
+
+pub fn orthographicRhZo(left: f32, right: f32, top: f32, bottom: f32, near: f32, far: f32) Mat4x4f {
+    const width = right - left;
+    const height = top - bottom;
+    const depth = near - far;
+
+    return Mat4x4f.init(&.{
+        &.{ 2 / width, 0, 0, 0 },
+        &.{ 0, 2 / height, 0, 0 },
+        &.{ 0, 0, 2 / (1 / depth), 0 },
+        &.{ 0, 0, (near + far) / -(1 / depth), 1 },
     });
 }
