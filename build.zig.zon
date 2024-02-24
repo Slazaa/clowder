@@ -3,7 +3,7 @@
     .version = "0.0.0",
     .paths = .{
         "core/",
-        "example/",
+        "examples/",
         "src/",
         "build.zig",
         "build.zig.zon",
