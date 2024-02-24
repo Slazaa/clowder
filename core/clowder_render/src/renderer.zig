@@ -82,15 +82,17 @@ pub fn Renderer(comptime config: Config) type {
         /// Renders `render_object` with `material`.
         pub fn render(
             self: Self,
-            render_object: RenderObject,
             material: Material,
             camera: root.Camera,
+            camera_transform: root.Transform,
+            render_object: RenderObject,
             transform: root.Transform,
         ) void {
             self.backend_base.render(
-                render_object,
                 material,
                 camera,
+                camera_transform,
+                render_object,
                 transform,
             );
         }

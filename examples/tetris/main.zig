@@ -54,6 +54,18 @@ fn spawnPiece(app: *clw.App, image: clw.Image, kind: PieceKind) !clw.Entity {
         },
     };
 
+    const m1 = clw.Mat2x2f.init(&.{
+        &.{ 1, 0 },
+        &.{ 2, -1 },
+    });
+
+    const m2 = clw.Mat2x2f.init(&.{
+        &.{ 3, 4 },
+        &.{ -2, -3 },
+    });
+
+    std.debug.print("{d:.2}\n", .{clw.Mat2x2f.mult(m1, m2)});
+
     const piece = app.spawn();
 
     for (0..4) |i| {

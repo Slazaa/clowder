@@ -205,13 +205,28 @@ pub const Base = struct {
         _ = win_nat.SwapBuffers(window_context.base.device_context);
     }
 
-    pub fn render(self: Self, render_object: opengl.RenderObject, material: opengl.Material, camera: root.Camera, transform: root.Transform) void {
+    pub fn render(
+        self: Self,
+        material: opengl.Material,
+        camera: root.Camera,
+        camera_transform: root.Transform,
+        render_object: opengl.RenderObject,
+        transform: root.Transform,
+    ) void {
         material.select();
 
-        var transform_matrix = math.Mat4x4f.identity;
+        // var transform_matrix = math.Mat4x4f.identity;
 
-        transform_matrix = math.mat.translate(transform_matrix, transform.position);
-        transform_matrix = math.Mat4x4f.mult(transform_matrix, camera.projection);
+        // transform_matrix = math.mat.translate(transform_matrix, transform.position);
+        // transform_matrix = math.Mat4x4f.mult(transform_matrix, camera.projection);
+
+        const projection = camera.projection;
+        const view = math.mat.translation(math.Mat4x4f.identity, -camera_transform.position);
+        const model = math.mat.translation(math.Mat4x4f.identity, transform.position);
+        _ = view;
+
+        const transform_matrix = math.Mat4x4f.mult(projection, model);
+        // transform_matrix = math.Mat4x4f.mult(transform_matrix, model);
 
         const transform_uniform = nat.glGetUniformLocation(material.shader.program, "uTransform");
         nat.glUniformMatrix4fv(transform_uniform, 1, nat.GL_FALSE, &transform_matrix.values);

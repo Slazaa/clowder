@@ -46,7 +46,9 @@ pub fn Mat(comptime T: type, comptime m: usize, comptime n: usize) type {
                 }
             }
 
-            var values_: [row_count * column_count]T = undefined;
+            var self = Self{
+                .values = undefined,
+            };
 
             for (0..row_count * column_count) |i| {
                 const pos = Vec2u{
@@ -54,12 +56,10 @@ pub fn Mat(comptime T: type, comptime m: usize, comptime n: usize) type {
                     @intCast(@divFloor(i, column_count)),
                 };
 
-                values_[i] = values[pos[0]][pos[1]];
+                self.set(pos[1], pos[0], values[pos[1]][pos[0]]);
             }
 
-            return .{
-                .values = values_,
-            };
+            return self;
         }
 
         inline fn checkPos(row: usize, column: usize) void {
@@ -75,7 +75,7 @@ pub fn Mat(comptime T: type, comptime m: usize, comptime n: usize) type {
 
         pub inline fn set(self: *Self, row: usize, column: usize, value: T) void {
             checkPos(row, column);
-            self.values[row * m + column] = value;
+            self.values[row * row_count + column] = value;
         }
 
         pub inline fn eql(a: Self, b: Self) bool {
@@ -111,36 +111,50 @@ pub fn Mat(comptime T: type, comptime m: usize, comptime n: usize) type {
 
             for (0..Out.row_count) |i| {
                 for (0..Out.column_count) |j| {
-                    var res: Out.Child = 0;
+                    var value: Out.Child = 0;
 
                     for (0..Out.column_count) |k| {
-                        res += a.get(i, k) * b.get(k, j);
+                        value += a.get(j, k) * b.get(k, i);
                     }
 
-                    result.set(i, j, res);
+                    result.set(i, j, value);
                 }
             }
 
             return result;
         }
+
+        pub fn format(self: Self, comptime fmt: []const u8, _: std.fmt.FormatOptions, writer: anytype) !void {
+            for (0..column_count) |i| {
+                try writer.writeAll("| ");
+
+                for (0..row_count) |j| {
+                    try writer.print("{" ++ fmt ++ "} ", .{self.get(j, i)});
+                }
+
+                try writer.writeAll("|\n");
+            }
+        }
     };
 }
 
+pub const Mat2x2f = Mat(f32, 2, 2);
+pub const Mat3x4f = Mat(f32, 3, 3);
 pub const Mat4x4f = Mat(f32, 4, 4);
 
-pub fn scale(mat: Mat4x4f, vec: Vec3f) Mat4x4f {
+pub fn scaling(mat: Mat4x4f, vec: Vec3f) Mat4x4f {
     return Mat4x4f.mult(
         mat,
         Mat4x4f.init(.{
-            .{ vec.get(0), 0, 0, 0 },
-            .{ 0, vec.get(1), 0, 0 },
-            .{ 0, 0, vec.get(2), 0 },
+            .{ vec[0], 0, 0, 0 },
+            .{ 0, vec[1], 0, 0 },
+            .{ 0, 0, vec[2], 0 },
             .{ 0, 0, 0, 1 },
         }),
     );
 }
 
-pub fn translate(mat: Mat4x4f, vec: Vec3f) Mat4x4f {
+pub fn translation(mat: Mat4x4f, vec: Vec3f) Mat4x4f {
     return Mat4x4f.add(
         mat,
         Mat4x4f.init(&.{
@@ -160,8 +174,8 @@ pub fn orthographicRhNo(left: f32, right: f32, top: f32, bottom: f32, near: f32,
     return Mat4x4f.init(&.{
         &.{ 2 / width, 0, 0, 0 },
         &.{ 0, 2 / height, 0, 0 },
-        &.{ 0, 0, 1 / depth, 0 },
-        &.{ 0, 0, (1 / depth) * near, 1 },
+        &.{ 0, 0, 2 / depth, (near + far) / depth },
+        &.{ 0, 0, 0, 1 },
     });
 }
 
@@ -173,7 +187,7 @@ pub fn orthographicRhZo(left: f32, right: f32, top: f32, bottom: f32, near: f32,
     return Mat4x4f.init(&.{
         &.{ 2 / width, 0, 0, 0 },
         &.{ 0, 2 / height, 0, 0 },
-        &.{ 0, 0, 2 / (1 / depth), 0 },
-        &.{ 0, 0, (near + far) / -(1 / depth), 1 },
+        &.{ 0, 0, 1 / depth, (1 / depth) * near },
+        &.{ 0, 0, 0, 1 },
     });
 }

@@ -32,6 +32,8 @@ pub fn initCameraSystem(app: *root.App) !void {
     const camera = app.spawn();
 
     try app.addBundle(camera, root.bundle.OrthographicCamera.init(window.getSize()));
+
+    try app.addComponent(camera, root.Transform.init(.{ -300, 0, 0 }, .{ 1, 1, 1 }, .{ 0, 0, 0 }));
 }
 
 pub fn initDefaultShaderSystem(app: *root.App) !void {
@@ -161,6 +163,8 @@ pub fn renderSystem(app: *root.App) !void {
     while (camera_query.next()) |camera_entity| {
         const camera = app.getComponent(camera_entity, root.Camera).?;
 
+        const camera_transform = app.getComponent(camera_entity, root.Transform) orelse root.Transform.default;
+
         var mesh_query = app.query(.{root.Mesh(.{})}, .{});
 
         while (mesh_query.next()) |mesh_entity| {
@@ -182,7 +186,7 @@ pub fn renderSystem(app: *root.App) !void {
                 };
             };
 
-            renderer.render(mesh.render_object, render_material, camera, transform);
+            renderer.render(render_material, camera, camera_transform, mesh.render_object, transform);
         }
     }
 
