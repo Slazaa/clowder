@@ -5,6 +5,13 @@ const root = @import("../root.zig");
 pub const DefaultShader = struct { root.DefaultShader };
 pub const DefaultRenderMaterial = struct { root.DefaultRenderMaterial };
 
+pub const Fps = struct { f32 };
+
+pub const Delta = struct {
+    value: f32,
+    now: u64 = 0,
+};
+
 pub fn initWindowSystem(app: *root.App) !void {
     const main_window = app.spawn();
 
@@ -106,6 +113,14 @@ pub fn initDefaultMaterialSystem(app: *root.App) !void {
     try app.addComponent(material_entity, DefaultRenderMaterial{material});
 }
 
+pub fn initDeltaSystem(app: *root.App) !void {
+    const fps = app.spawn();
+    try app.addComponent(fps, Fps{1});
+
+    const delta = app.spawn();
+    try app.addComponent(delta, Delta{ .value = 0 });
+}
+
 pub fn deinitWindowSystem(app: *root.App) void {
     var query = app.query(.{ root.DefaultWindow, root.Renderer(.{}) }, .{});
 
@@ -193,16 +208,45 @@ pub fn renderSystem(app: *root.App) !void {
     renderer.swap();
 }
 
+pub fn deltaSystem(app: *root.App) !void {
+    const fps = app.getFirst(.{Fps}, .{}).?;
+    const fps_comp = app.getComponent(fps, Fps).?;
+
+    const delta = app.getFirst(.{Delta}, .{}).?;
+    const delta_comp = app.getComponentPtr(delta, Delta).?;
+
+    if (delta_comp.now == 0) {
+        delta_comp.now = @intCast(std.time.milliTimestamp());
+    }
+
+    const last = delta_comp.now;
+    delta_comp.now = @intCast(std.time.milliTimestamp());
+
+    delta_comp.value = @floatFromInt(delta_comp.now - last / 1_000);
+
+    const target = 1 / fps_comp[0];
+
+    std.debug.print("{d:.2}\n", .{(target - delta_comp.value) * 1_000_000});
+
+    if (delta_comp.value < target) {
+        std.time.sleep(@intFromFloat((target - delta_comp.value) * 1_000_000));
+    }
+}
+
 pub const plugin = root.Plugin{
     .initSystems = &.{
         initWindowSystem,
         initCameraSystem,
         initDefaultShaderSystem,
         initDefaultMaterialSystem,
+        initDeltaSystem,
     },
     .deinitSystems = &.{
         deinitWindowSystem,
         deinitMeshSystem,
     },
-    .systems = &.{renderSystem},
+    .systems = &.{
+        renderSystem,
+        deltaSystem,
+    },
 };

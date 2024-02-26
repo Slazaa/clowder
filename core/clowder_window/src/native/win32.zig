@@ -214,6 +214,7 @@ pub extern fn PostQuitMessage(nExitCode: c_int) void;
 pub extern fn RegisterClassExA(lpWndClass: ?*const WNDCLASSEXA) ATOM;
 pub extern fn ReleaseDC(hWnd: HWND, hDC: HDC) c_int;
 pub extern fn SetPixelFormat(hdc: HDC, format: c_int, ppfd: ?*const PIXELFORMATDESCRIPTOR) BOOL;
+pub extern fn SetWindowTextA(hWnd: HWND, lpString: LPCSTR) BOOL;
 pub extern fn ShowWindow(hWnd: HWND, nCmdShow: c_int) BOOL;
 pub extern fn SwapBuffers(HDC) BOOL;
 pub extern fn TranslateMessage(lpMsg: ?*const MSG) BOOL;

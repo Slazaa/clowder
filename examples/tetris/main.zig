@@ -2,12 +2,14 @@ const std = @import("std");
 
 const clw = @import("clowder");
 
-pub const PieceKind = enum { i, j, l, o, s, t, z };
+const PieceKind = enum { i, j, l, o, s, t, z };
+
+const Piece = struct {};
+
+const tile_size = clw.Vec2f{ 30, 30 };
 
 fn spawnPiece(app: *clw.App, image: clw.Image, kind: PieceKind) !clw.Entity {
     const index: usize = @intFromEnum(kind);
-
-    const tile_size = clw.Vec2f{ 30, 30 };
 
     const positions: [4]clw.Vec3f = switch (kind) {
         .i => .{
@@ -56,6 +58,9 @@ fn spawnPiece(app: *clw.App, image: clw.Image, kind: PieceKind) !clw.Entity {
 
     const piece = app.spawn();
 
+    try app.addComponent(piece, Piece{});
+    try app.addComponent(piece, clw.Transform.init(.{ 0, -240, 0 }, .{ 1, 1, 1 }, .{ 0, 0, 0 }));
+
     for (0..4) |i| {
         const tile = app.spawn();
 
@@ -77,6 +82,13 @@ fn spawnPiece(app: *clw.App, image: clw.Image, kind: PieceKind) !clw.Entity {
     return piece;
 }
 
+fn initWindowSystem(app: *clw.App) !void {
+    const window = app.getFirst(.{clw.DefaultWindow}, .{}).?;
+    const window_comp = app.getComponent(window, clw.DefaultWindow).?;
+
+    window_comp.setTitle("Tetris");
+}
+
 fn initSystem(app: *clw.App) !void {
     const current_path = comptime std.fs.path.dirname(@src().file).?;
 
@@ -85,8 +97,17 @@ fn initSystem(app: *clw.App) !void {
     const tile_image = try clw.loadImageFromFile(app.allocator, tile_path);
     defer tile_image.deinit();
 
-    const piece = try spawnPiece(app, tile_image, .i);
+    const piece = try spawnPiece(app, tile_image, .l);
     _ = piece;
+}
+
+fn fallSystem(app: *clw.App) !void {
+    var piece_query = app.query(.{ Piece, clw.Transform }, .{});
+
+    while (piece_query.next()) |entity| {
+        const transform = app.getComponentPtr(entity, clw.Transform).?;
+        transform.position[1] += tile_size[1];
+    }
 }
 
 pub fn main() !void {
@@ -97,7 +118,11 @@ pub fn main() !void {
 
     var app = try clw.init(allocator, .{
         .plugins = &.{clw.plugin.beginner},
-        .initSystems = &.{initSystem},
+        .initSystems = &.{
+            initWindowSystem,
+            initSystem,
+        },
+        .systems = &.{fallSystem},
     });
 
     defer app.deinit();

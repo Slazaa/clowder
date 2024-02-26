@@ -2,6 +2,13 @@ const std = @import("std");
 
 const clw = @import("clowder");
 
+fn initWindowSystem(app: *clw.App) !void {
+    const window = app.getFirst(.{clw.DefaultWindow}, .{}).?;
+    const window_comp = app.getComponent(window, clw.DefaultWindow).?;
+
+    window_comp.setTitle("Triangle");
+}
+
 fn initSystem(app: *clw.App) !void {
     const triangle = app.spawn();
 
@@ -36,7 +43,10 @@ pub fn main() !void {
 
     var app = try clw.init(allocator, .{
         .plugins = &.{clw.plugin.beginner},
-        .initSystems = &.{initSystem},
+        .initSystems = &.{
+            initWindowSystem,
+            initSystem,
+        },
     });
 
     defer app.deinit();

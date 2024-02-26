@@ -20,10 +20,10 @@ pub const Error = error{
 
 const ColorType = enum(u8) {
     grayscale = 0,
-    rgb_color = 2,
+    rgb = 2,
     palette_index = 3,
     grayscale_alpha = 4,
-    rgba_color = 6,
+    rgba = 6,
 };
 
 const CompressionMethod = enum(u8) {
@@ -40,11 +40,32 @@ const InterlaceMethod = enum(u8) {
 };
 
 const HeaderInfos = struct {
+    const Self = @This();
+
     length: u32,
     type: [4]u8,
+
+    pub fn loadFromStream(stream: *std.io.StreamSource) !Self {
+        const reader = stream.reader();
+
+        const length = try reader.readInt(u32, .big);
+        var type_: [4]u8 = undefined;
+
+        try reader.readNoEof(&type_);
+
+        std.debug.print("Type: {s}\n", .{type_});
+        std.debug.print("Len: {}\n", .{length});
+
+        return .{
+            .length = length,
+            .type = type_,
+        };
+    }
 };
 
 const ImageInfos = struct {
+    const Self = @This();
+
     width: u32,
     height: u32,
     bit_depth: u8,
@@ -52,6 +73,130 @@ const ImageInfos = struct {
     compression_method: CompressionMethod,
     filter_method: FilterMethod,
     interlace_method: InterlaceMethod,
+
+    pub fn loadFromStream(stream: *std.io.StreamSource) !Self {
+        const reader = stream.reader();
+
+        const header_infos = try HeaderInfos.loadFromStream(stream);
+
+        if (!std.mem.eql(u8, &header_infos.type, "IHDR")) {
+            return Error.InvalidImageHeader;
+        }
+
+        if (header_infos.length != image_header_length) {
+            return Error.InvalidImageHeader;
+        }
+
+        var data: [image_header_length]u8 = undefined;
+        _ = try reader.readNoEof(&data);
+
+        var data_stream = std.io.fixedBufferStream(&data);
+        var data_reader = data_stream.reader();
+
+        // Size
+        const width = try data_reader.readInt(u32, .big);
+        const height = try data_reader.readInt(u32, .big);
+
+        // Bit depth
+        const bit_depth = try data_reader.readInt(u8, .big);
+
+        // Color type
+        const color_type_byte = try data_reader.readInt(u8, .big);
+
+        if (!std.mem.containsAtLeast(u8, &.{ 0, 2, 3, 4, 6 }, 1, &.{color_type_byte})) {
+            return Error.InvalidImageHeader;
+        }
+
+        const color_type: ColorType = @enumFromInt(color_type_byte);
+
+        if (color_type == .grayscale and
+            !std.mem.containsAtLeast(u8, &.{ 1, 2, 4, 8, 16 }, 1, &.{bit_depth}))
+        {
+            return Error.InvalidImageHeader;
+        }
+
+        if ((color_type == .rgb_color or
+            color_type == .grayscale_alpha or
+            color_type == .rgba_color) and
+            !std.mem.containsAtLeast(u8, &.{ 8, 16 }, 1, &.{bit_depth}))
+        {
+            return Error.InvalidImageHeader;
+        }
+
+        if (color_type == .palette_index and
+            !std.mem.containsAtLeast(u8, &.{ 1, 2, 4, 8 }, 1, &.{bit_depth}))
+        {
+            return Error.InvalidImageHeader;
+        }
+
+        // Compression method
+        const compression_method_byte = try data_reader.readInt(u8, .big);
+
+        if (compression_method_byte != 0) {
+            return Error.InvalidImageHeader;
+        }
+
+        const compression_method: CompressionMethod = @enumFromInt(compression_method_byte);
+
+        // Filter method
+        const filter_method_byte = try data_reader.readInt(u8, .big);
+
+        if (filter_method_byte != 0) {
+            return Error.InvalidImageHeader;
+        }
+
+        const filter_method: FilterMethod = @enumFromInt(filter_method_byte);
+
+        // Interlace method
+        const interlace_method_byte = try data_reader.readInt(u8, .big);
+
+        if (interlace_method_byte != 0 and interlace_method_byte != 1) {
+            return Error.InvalidImageHeader;
+        }
+
+        const interlace_method: InterlaceMethod = @enumFromInt(interlace_method_byte);
+
+        // CRC
+        try checkCrc(stream, header_infos, &data);
+
+        return .{
+            .width = width,
+            .height = height,
+            .bit_depth = bit_depth,
+            .color_type = color_type,
+            .compression_method = compression_method,
+            .filter_method = filter_method,
+            .interlace_method = interlace_method,
+        };
+    }
+
+    pub inline fn allowsPalette(self: Self) bool {
+        return self.color_type == .palette_index or
+            self.color_type == .rgb or
+            self.color_type == .rgba;
+    }
+
+    pub inline fn maxPaletteLength(self: Self) u32 {
+        return std.math.pow(u32, 2, self.bit_depth);
+    }
+
+    pub inline fn channelCount(self: Self) u8 {
+        return switch (self.color_type) {
+            .grayscale => 1,
+            .grayscale_alpha => 2,
+            .palette_index => 1,
+            .rgb => 3,
+            .rgba => 4,
+        };
+    }
+
+    pub inline fn pixelBits(self: Self) u8 {
+        return self.bit_depth * self.channelCount();
+    }
+
+    pub inline fn lineBytes(self: Self) u32 {
+        return (self.pixelBits() * self.width + 7) / 8;
+    }
 };
 
 const AdaptiveFilterType = enum(u8) {
@@ -62,8 +207,10 @@ const AdaptiveFilterType = enum(u8) {
     paeth = 4,
 };
 
-fn checkSignature(reader: std.fs.File.Reader) !void {
+fn checkSignature(stream: *std.io.StreamSource) !void {
     var file_signature: [signature.len]u8 = undefined;
+
+    const reader = stream.reader();
 
     try reader.readNoEof(&file_signature);
 
@@ -72,254 +219,162 @@ fn checkSignature(reader: std.fs.File.Reader) !void {
     }
 }
 
-fn checkCrc(reader: std.fs.File.Reader) !void {
-    reader.skipBytes(4, .{}) catch |err| {
-        if (err != error.EndOfStream) {
-            return err;
-        }
-    };
-}
+fn checkCrc(stream: *std.io.StreamSource, header_infos: HeaderInfos, data: []const u8) !void {
+    const reader = stream.reader();
 
-fn loadHeaderInfos(reader: std.fs.File.Reader) !HeaderInfos {
-    var header_infos: HeaderInfos = undefined;
-    header_infos.length = try reader.readInt(u32, .big);
+    const expected = try reader.readInt(u32, .big);
 
-    try reader.readNoEof(&header_infos.type);
+    var crc = std.hash.Crc32.init();
+    crc.update(&header_infos.type);
+    crc.update(data);
 
-    std.debug.print("Type: {s}\n", .{header_infos.type});
-    std.debug.print("Len: {}\n", .{header_infos.length});
-
-    return header_infos;
-}
-
-fn loadImageHeader(reader: std.fs.File.Reader, image_infos: *ImageInfos) !void {
-    const header_infos = try loadHeaderInfos(reader);
-
-    if (!std.mem.eql(u8, &header_infos.type, "IHDR")) {
-        return Error.InvalidImageHeader;
+    if (crc.final() != expected) {
+        return error.InvalidCrc;
     }
-
-    if (header_infos.length != image_header_length) {
-        return Error.InvalidImageHeader;
-    }
-
-    // Size
-    image_infos.width = try reader.readInt(u32, .big);
-    image_infos.height = try reader.readInt(u32, .big);
-
-    // Bit depth
-    image_infos.bit_depth = try reader.readInt(u8, .big);
-
-    // Color type
-    const color_type_byte = try reader.readInt(u8, .big);
-
-    if (!std.mem.containsAtLeast(u8, &.{ 0, 2, 3, 4, 6 }, 1, &.{color_type_byte})) {
-        return Error.InvalidImageHeader;
-    }
-
-    image_infos.color_type = @enumFromInt(color_type_byte);
-
-    if (image_infos.color_type == .grayscale and
-        !std.mem.containsAtLeast(u8, &.{ 1, 2, 4, 8, 16 }, 1, &.{image_infos.bit_depth}))
-    {
-        return Error.InvalidImageHeader;
-    }
-
-    if ((image_infos.color_type == .rgb_color or
-        image_infos.color_type == .grayscale_alpha or
-        image_infos.color_type == .rgba_color) and
-        !std.mem.containsAtLeast(u8, &.{ 8, 16 }, 1, &.{image_infos.bit_depth}))
-    {
-        return Error.InvalidImageHeader;
-    }
-
-    if (image_infos.color_type == .palette_index and
-        !std.mem.containsAtLeast(u8, &.{ 1, 2, 4, 8 }, 1, &.{image_infos.bit_depth}))
-    {
-        return Error.InvalidImageHeader;
-    }
-
-    // Compression method
-    const compression_method_byte = try reader.readInt(u8, .big);
-
-    if (compression_method_byte != 0) {
-        return Error.InvalidImageHeader;
-    }
-
-    image_infos.compression_method = @enumFromInt(compression_method_byte);
-
-    // Filter method
-    const filter_method_byte = try reader.readInt(u8, .big);
-
-    if (filter_method_byte != 0) {
-        return Error.InvalidImageHeader;
-    }
-
-    image_infos.filter_method = @enumFromInt(filter_method_byte);
-
-    // Interlace method
-    const interlace_method_byte = try reader.readInt(u8, .big);
-
-    if (interlace_method_byte != 0 and interlace_method_byte != 1) {
-        return Error.InvalidImageHeader;
-    }
-
-    image_infos.interlace_method = @enumFromInt(interlace_method_byte);
-
-    // CRC
-    try checkCrc(reader);
 }
 
 fn loadPalette(
     allocator: std.mem.Allocator,
-    reader: std.fs.File.Reader,
-    header_infos: HeaderInfos,
-    palette: *?std.ArrayList(root.Rgb24),
+    stream: *std.io.StreamSource,
     image_infos: ImageInfos,
-) !bool {
-    if (!std.mem.eql(u8, &header_infos.type, "PLTE")) {
-        return false;
-    }
-
-    if (image_infos.color_type != .palette_index and
-        image_infos.color_type != .rgb_color and
-        image_infos.color_type != .rgba_color)
+    header_infos: HeaderInfos,
+    maybe_palette: *?std.ArrayList(root.Rgb24),
+) !void {
+    if (maybe_palette.* != null or
+        !image_infos.allowsPalette() or
+        header_infos.length % 3 != 0)
     {
         return Error.InvalidPalette;
     }
 
-    if (header_infos.length % 3 != 0) {
+    const length = header_infos.length / 3;
+
+    if (length > image_infos.maxPaletteLength()) {
         return Error.InvalidPalette;
     }
 
-    const entry_count = header_infos.length / 3;
+    var palette = try std.ArrayList(root.Rgb24).initCapacity(allocator, length);
+    errdefer palette.deinit();
 
-    if (entry_count > std.math.pow(u32, 2, image_infos.bit_depth)) {
-        return Error.InvalidPalette;
-    }
+    palette.expandToCapacity();
 
-    palette.* = try std.ArrayList(root.Rgb24).initCapacity(allocator, entry_count);
-    try palette.*.?.resize(entry_count);
+    var data = std.ArrayList(u8).init(allocator);
+    defer data.deinit();
 
-    for (0..entry_count) |i| {
+    const reader = stream.reader();
+
+    for (0..length) |i| {
         var buffer: [3]u8 = undefined;
         try reader.readNoEof(&buffer);
 
-        palette.*.?.items[i].r = buffer[0];
-        palette.*.?.items[i].g = buffer[1];
-        palette.*.?.items[i].b = buffer[2];
+        palette.items[i].red = buffer[0];
+        palette.items[i].green = buffer[1];
+        palette.items[i].blue = buffer[2];
+
+        try data.appendSlice(&buffer);
     }
 
-    return true;
+    maybe_palette.* = palette;
+
+    try checkCrc(stream, header_infos, data.items);
 }
 
 fn loadData(
-    allocator: std.mem.Allocator,
-    reader: std.fs.File.Reader,
-    header_infos: HeaderInfos,
-    palette: *?std.ArrayList(root.Rgb24),
+    stream: *std.io.StreamSource,
     image_infos: ImageInfos,
-) !bool {
-    if (!std.mem.eql(u8, &header_infos.type, "IDAT")) {
-        return false;
-    }
-
-    if (palette.* == null and image_infos.color_type == .palette_index) {
+    maybe_palette: ?[]const root.Rgb24,
+) !void {
+    if (maybe_palette.* == null and image_infos.color_type == .palette_index) {
         return Error.InvalidData;
     }
 
-    if (palette.* != null and
+    if (maybe_palette.* != null and
         !std.mem.containsAtLeast(
         ColorType,
-        .{ .palette_index, .rgb_color, .rgba_color },
+        &.{ .palette_index, .rgb_color, .rgba_color },
         1,
         &.{image_infos.color_type},
     )) {
         return Error.InvalidData;
     }
 
-    var decompress_stream = try std.compress.zlib.decompressStream(allocator, reader);
-    defer decompress_stream.deinit();
+    const reader = stream.reader();
 
-    if (image_infos.interlace_method != .none) {
-        @panic("Not implemented yet");
+    const decompressor = std.compress.zlib.decompressor(reader);
+    const decompressor_reader = decompressor.reader();
+
+    switch (image_infos.interlace_method) {
+        .none => {},
+        .adam7 => {},
     }
-
-    if (image_infos.filter_method != .adaptive) {
-        @panic("Not implemented yet");
-    }
-
-    const filter_type_byte = try reader.readInt(u8, .big);
-
-    if (!std.mem.containsAtLeast(u8, &.{ 0, 1, 2, 3, 4 }, 1, &.{filter_type_byte})) {
-        return Error.InvalidData;
-    }
-
-    const filter_type: AdaptiveFilterType = @enumFromInt(filter_type_byte);
-    _ = filter_type;
-
-    return true;
 }
 
-fn loadAncillaryChunk(reader: std.fs.File.Reader, header_infos: HeaderInfos) !bool {
+fn loadAncillaryChunk(stream: std.io.StreamSource, header_infos: HeaderInfos) !void {
+    const reader = stream.reader();
+
     reader.skipBytes(header_infos.length, .{}) catch {
         return Error.InvalidData;
     };
-
-    return true;
 }
 
 fn loadChunk(
     allocator: std.mem.Allocator,
-    reader: std.fs.File.Reader,
-    header_infos: HeaderInfos,
-    palette: *?std.ArrayList(root.Rgb24),
+    stream: *std.io.StreamSource,
     image_infos: ImageInfos,
+    header_infos: HeaderInfos,
+    maybe_palette: *?std.ArrayList(root.Rgb24),
 ) !void {
-    if (try loadPalette(allocator, reader, header_infos, palette, image_infos)) {
-        return;
-    }
+    if (std.mem.eql(u8, &header_infos.type, "PLTE")) {
+        try loadPalette(allocator, stream, image_infos, header_infos, maybe_palette);
+    } else if (std.mem.eql(u8, &header_infos.type, "IDAT")) {
+        const palette = if (maybe_palette) |palette|
+            palette.items
+        else
+            null;
 
-    if (try loadData(allocator, reader, header_infos, palette, image_infos)) {
-        return;
+        try loadData(allocator, image_infos, stream, palette);
+    } else {
+        try loadAncillaryChunk(stream, header_infos);
     }
-
-    if (try loadAncillaryChunk(reader, header_infos)) {
-        return;
-    }
-
-    return Error.InvalidChunk;
 }
 
-pub fn load(allocator: std.mem.Allocator, reader: std.fs.File.Reader) !root.Image {
+pub fn loadFromFile(allocator: std.mem.Allocator, file: std.fs.File) !root.Image {
+    var stream = std.io.StreamSource{ .file = file };
+    return try loadFromStream(allocator, &stream);
+}
+
+pub fn loadFromStream(allocator: std.mem.Allocator, stream: *std.io.StreamSource) !root.Image {
+    try checkSignature(stream);
+
+    const image_infos = try ImageInfos.loadFromStream(stream);
+
     var image = root.Image.init(allocator);
     errdefer image.deinit();
 
-    try checkSignature(reader);
-
-    var image_infos: ImageInfos = undefined;
-
-    try loadImageHeader(reader, &image_infos);
-
     image.size = .{ image_infos.width, image_infos.height };
 
-    var palette: ?std.ArrayList(root.Rgb24) = null;
+    var maybe_palette: ?std.ArrayList(root.Rgb24) = null;
 
     errdefer {
-        if (palette) |palette_| {
-            palette_.deinit();
+        if (maybe_palette) |palette| {
+            palette.deinit();
         }
     }
 
     while (true) {
-        const header_infos = try loadHeaderInfos(reader);
+        const header_infos = try HeaderInfos.loadFromStream(stream);
 
         if (std.mem.eql(u8, &header_infos.type, "IEND")) {
             break;
         }
 
-        try loadChunk(allocator, reader, header_infos, &palette, image_infos);
-        try checkCrc(reader);
+        try loadChunk(
+            allocator,
+            stream,
+            image_infos,
+            header_infos,
+            &maybe_palette,
+        );
     }
 
     return image;

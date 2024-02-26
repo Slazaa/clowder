@@ -150,6 +150,10 @@ pub const Base = struct {
         return .{ @intCast(rect.right - rect.left), @intCast(rect.bottom - rect.top) };
     }
 
+    pub fn setTitle(self: Self, title: [:0]const u8) void {
+        _ = nat.SetWindowTextA(self.handle, title);
+    }
+
     pub fn pollEvent(_: Self) ?root.Event {
         var msg: nat.MSG = undefined;
 

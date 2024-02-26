@@ -10,16 +10,17 @@ pub const Error = error{
 };
 
 pub fn Storage(comptime Component: type) type {
-    const empty_struct = @sizeOf(Component) == 0;
-
     return struct {
         const Self = @This();
+
+        const empty_component = @sizeOf(Component) == 0;
 
         allocator: std.mem.Allocator,
         component_size: usize,
         log2_align: std.mem.Allocator.Log2Align,
         entities: std.ArrayListUnmanaged(Entity),
         instances: std.ArrayListUnmanaged(Component),
+        empty_component: bool,
 
         pub fn init(allocator: std.mem.Allocator) !*Self {
             const self = try allocator.create(Self);
@@ -28,14 +29,15 @@ pub fn Storage(comptime Component: type) type {
                 .component_size = @sizeOf(Component),
                 .log2_align = std.math.log2(@alignOf(Component)),
                 .entities = std.ArrayListUnmanaged(Entity){},
-                .instances = if (!empty_struct) std.ArrayListUnmanaged(Component){} else undefined,
+                .instances = if (!empty_component) std.ArrayListUnmanaged(Component){} else undefined,
+                .empty_component = empty_component,
             };
 
             return self;
         }
 
         pub fn deinit(self: *Self) void {
-            if (!empty_struct) {
+            if (!self.empty_component) {
                 var bytes: []u8 = undefined;
                 bytes.ptr = @ptrCast(self.instances.items.ptr);
                 bytes.len = self.instances.capacity * self.component_size;
@@ -65,7 +67,7 @@ pub fn Storage(comptime Component: type) type {
                 return Error.EntityAlreadyAdded;
             }
 
-            if (!empty_struct) {
+            if (!empty_component) {
                 try self.instances.append(self.allocator, component);
             }
 
@@ -79,7 +81,7 @@ pub fn Storage(comptime Component: type) type {
 
             const entity_index = self.getEntityIndex(entity);
 
-            if (!empty_struct) {
+            if (!empty_component) {
                 self.instances.orderedRemove(entity_index);
             }
 
@@ -88,7 +90,7 @@ pub fn Storage(comptime Component: type) type {
             return true;
         }
 
-        pub usingnamespace if (!empty_struct)
+        pub usingnamespace if (!empty_component)
             struct {
                 pub fn get(self: Self, entity: Entity) ?Component {
                     const entity_index = self.getEntityIndex(entity) catch return null;

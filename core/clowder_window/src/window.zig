@@ -71,6 +71,11 @@ pub fn Window(comptime backend: root.Backend) type {
             return self.base.getSize();
         }
 
+        /// Sets the tile of the `Window` to `title`.
+        pub inline fn setTitle(self: Self, title: [:0]const u8) void {
+            self.base.setTitle(title);
+        }
+
         /// Returns a `Context` of the `Window`.
         pub fn context(self: *Self) Context {
             return .{

@@ -2,12 +2,19 @@ const std = @import("std");
 
 const clw = @import("clowder");
 
+fn initWindowSystem(app: *clw.App) !void {
+    const window = app.getFirst(.{clw.DefaultWindow}, .{}).?;
+    const window_comp = app.getComponent(window, clw.DefaultWindow).?;
+
+    window_comp.setTitle("Sprite");
+}
+
 fn initSystem(app: *clw.App) !void {
     const current_path = comptime std.fs.path.dirname(@src().file).?;
 
     const sprite = app.spawn();
 
-    const image = try clw.loadImageFromFile(app.allocator, current_path ++ "/example.png");
+    const image = try clw.loadImageFromPath(app.allocator, current_path ++ "/example.png");
     defer image.deinit();
 
     const sprite_bundle = try clw.bundle.Sprite(.{}).init(
@@ -30,7 +37,10 @@ pub fn main() !void {
 
     var app = try clw.init(allocator, .{
         .plugins = &.{clw.plugin.beginner},
-        .initSystems = &.{initSystem},
+        .initSystems = &.{
+            initWindowSystem,
+            initSystem,
+        },
     });
 
     defer app.deinit();
