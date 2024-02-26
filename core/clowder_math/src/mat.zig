@@ -114,7 +114,7 @@ pub fn Mat(comptime T: type, comptime m: usize, comptime n: usize) type {
                     var value: Out.Child = 0;
 
                     for (0..Out.column_count) |k| {
-                        value += a.get(j, k) * b.get(k, i);
+                        value += a.get(i, k) * b.get(k, j);
                     }
 
                     result.set(i, j, value);
@@ -124,12 +124,24 @@ pub fn Mat(comptime T: type, comptime m: usize, comptime n: usize) type {
             return result;
         }
 
+        pub fn toColumnMajor(self: Self) Self {
+            var result: Self = undefined;
+
+            for (0..row_count) |i| {
+                for (0..column_count) |j| {
+                    result.set(j, i, self.get(i, j));
+                }
+            }
+
+            return result;
+        }
+
         pub fn format(self: Self, comptime fmt: []const u8, _: std.fmt.FormatOptions, writer: anytype) !void {
-            for (0..column_count) |i| {
+            for (0..row_count) |i| {
                 try writer.writeAll("| ");
 
-                for (0..row_count) |j| {
-                    try writer.print("{" ++ fmt ++ "} ", .{self.get(j, i)});
+                for (0..column_count) |j| {
+                    try writer.print("{" ++ fmt ++ "} ", .{self.get(i, j)});
                 }
 
                 try writer.writeAll("|\n");
@@ -139,7 +151,7 @@ pub fn Mat(comptime T: type, comptime m: usize, comptime n: usize) type {
 }
 
 pub const Mat2x2f = Mat(f32, 2, 2);
-pub const Mat3x4f = Mat(f32, 3, 3);
+pub const Mat3x3f = Mat(f32, 3, 3);
 pub const Mat4x4f = Mat(f32, 4, 4);
 
 pub fn scaling(mat: Mat4x4f, vec: Vec3f) Mat4x4f {
@@ -154,22 +166,19 @@ pub fn scaling(mat: Mat4x4f, vec: Vec3f) Mat4x4f {
     );
 }
 
-pub fn translation(mat: Mat4x4f, vec: Vec3f) Mat4x4f {
-    return Mat4x4f.add(
-        mat,
-        Mat4x4f.init(&.{
-            &.{ 1, 0, 0, vec[0] },
-            &.{ 0, 1, 0, vec[1] },
-            &.{ 0, 0, 1, vec[2] },
-            &.{ 0, 0, 0, 1 },
-        }),
-    );
+pub fn translation(vec: Vec3f) Mat4x4f {
+    return Mat4x4f.init(&.{
+        &.{ 1, 0, 0, vec[0] },
+        &.{ 0, 1, 0, vec[1] },
+        &.{ 0, 0, 1, vec[2] },
+        &.{ 0, 0, 0, 1 },
+    });
 }
 
 pub fn orthographicRhNo(left: f32, right: f32, top: f32, bottom: f32, near: f32, far: f32) Mat4x4f {
     const width = right - left;
     const height = top - bottom;
-    const depth = near - far;
+    const depth = far - near;
 
     return Mat4x4f.init(&.{
         &.{ 2 / width, 0, 0, 0 },

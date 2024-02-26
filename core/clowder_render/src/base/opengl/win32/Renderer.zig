@@ -215,18 +215,14 @@ pub const Base = struct {
     ) void {
         material.select();
 
-        // var transform_matrix = math.Mat4x4f.identity;
-
-        // transform_matrix = math.mat.translate(transform_matrix, transform.position);
-        // transform_matrix = math.Mat4x4f.mult(transform_matrix, camera.projection);
-
         const projection = camera.projection;
-        const view = math.mat.translation(math.Mat4x4f.identity, -camera_transform.position);
-        const model = math.mat.translation(math.Mat4x4f.identity, transform.position);
-        _ = view;
+        const view = math.mat.translation(-camera_transform.position);
+        const model = math.mat.translation(transform.position);
 
-        const transform_matrix = math.Mat4x4f.mult(projection, model);
-        // transform_matrix = math.Mat4x4f.mult(transform_matrix, model);
+        var transform_matrix = math.Mat4x4f.mult(projection, view);
+        transform_matrix = math.Mat4x4f.mult(transform_matrix, model);
+
+        transform_matrix = transform_matrix.toColumnMajor();
 
         const transform_uniform = nat.glGetUniformLocation(material.shader.program, "uTransform");
         nat.glUniformMatrix4fv(transform_uniform, 1, nat.GL_FALSE, &transform_matrix.values);

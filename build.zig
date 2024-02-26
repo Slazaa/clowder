@@ -10,12 +10,7 @@ fn thisPath(comptime suffix: []const u8) []const u8 {
     return comptime (std.fs.path.dirname(@src().file) orelse ".") ++ "/" ++ suffix;
 }
 
-fn install(
-    b: *std.Build,
-    target: std.Build.ResolvedTarget,
-    optimize: std.builtin.OptimizeMode,
-    name: []const u8,
-) !void {
+fn installExamples(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, name: []const u8) !void {
     const install_name_fmt = "install-example-{s}";
     const run_name_fmt = "example-{s}";
     const install_desc_fmt = "Build '{s}' example";
@@ -97,7 +92,7 @@ pub fn build(b: *std.Build) !void {
             continue;
         }
 
-        try install(b, target, optimize, entry.name);
+        try installExamples(b, target, optimize, entry.name);
     }
 
     const unit_tests = b.addTest(.{

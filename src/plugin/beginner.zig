@@ -33,7 +33,7 @@ pub fn initCameraSystem(app: *root.App) !void {
 
     try app.addBundle(camera, root.bundle.OrthographicCamera.init(window.getSize()));
 
-    try app.addComponent(camera, root.Transform.init(.{ -300, 0, 0 }, .{ 1, 1, 1 }, .{ 0, 0, 0 }));
+    try app.addComponent(camera, root.Transform.init(.{ 0, 0, 0 }, .{ 1, 1, 1 }, .{ 0, 0, 0 }));
 }
 
 pub fn initDefaultShaderSystem(app: *root.App) !void {

@@ -13,8 +13,8 @@ I do not plan on adding a GUI for Clowder. I think it would go against that
 simplicity and lightweight mindset.
 
 ## What's ECS ? 🤔
-ECS is a way of writing your applications where entities are given components, wich
-represent data. You can then apply logic to them through systems.
+ECS is a way of writing your applications where entities are given components,
+wich represent data. You can then apply logic to them through systems.
 
 Let's see an example. I want a player that has health and that heals over time.
 First, we will spawn a new entity that represents our player.
@@ -23,7 +23,8 @@ First, we will spawn a new entity that represents our player.
 const player = app.spawn();
 ```
 
-Then, we need to create our health component. Note that components are just structs.
+Then, we need to create our health component. Note that components are just
+structs.
 
 ```zig
 const Health = struct {
@@ -84,8 +85,19 @@ That's it! Now you know what ECS is.
 You can run examples but writting `zig build example-<example_name>`.For
 example, `zig build example-triangle` will run the triangle example.
 
+## Install ⚙️
+You can install Clowder using the `zig fetch` command.
+```
+zig fetch --save https://github.com/Slazaa/clowder/archive/<last-commit-hash>.tar.gz
+```
+
+And then import it in your project by adding this line in your `build.zig`.
+```zig
+_ = @import("clowder").link(b, exe);
+```
+
 ## Support Me ❤️
-This engine is open source and free to use. For that reason, donations would be
-greatly appreciated. Thank you. ❤
+This framework is open source and free to use. For that reason, donations would
+be greatly appreciated. Thank you. ❤
 
 My Patreon: https://www.patreon.com/Slazaa
