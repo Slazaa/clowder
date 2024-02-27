@@ -2,7 +2,7 @@ const std = @import("std");
 
 const math = @import("clowder_math");
 
-pub const png = @import("png.zig");
+pub const png = @import("png.zig"); // WIP
 // pub const tga = @import("tga.zig"); // WIP
 
 pub const Error = error{
@@ -37,8 +37,10 @@ pub fn loadImageFromPath(allocator: std.mem.Allocator, path: []const u8) !Image 
     const file = try std.fs.cwd().openFile(path, .{});
     defer file.close();
 
+    var stream = std.io.StreamSource{ .file = file };
+
     if (std.mem.endsWith(u8, path, ".png")) {
-        try png.loadFromFile(allocator, file);
+        return try png.loadFromStream(allocator, &stream);
     } else {
         return error.FormatNotSupported;
     }

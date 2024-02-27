@@ -94,7 +94,7 @@ fn initSystem(app: *clw.App) !void {
 
     const tile_path = current_path ++ "/tiles.png";
 
-    const tile_image = try clw.loadImageFromFile(app.allocator, tile_path);
+    const tile_image = try clw.loadImageFromPath(app.allocator, tile_path);
     defer tile_image.deinit();
 
     const piece = try spawnPiece(app, tile_image, .l);

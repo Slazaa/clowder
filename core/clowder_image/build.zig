@@ -2,8 +2,6 @@ const std = @import("std");
 
 const clw_math = @import("../clowder_math/build.zig");
 
-const zigimg = @import("lib/zigimg/build.zig");
-
 var module: ?*std.Build.Module = null;
 
 inline fn thisPath() []const u8 {
@@ -53,10 +51,6 @@ pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
     });
 
     const module_ = module.?;
-
-    module_.addImport("zigimg", zigimg.link(b, step));
-
-    step.root_module.addImport("clowder_ecs", module_);
 
     return module_;
 }
