@@ -36,11 +36,24 @@ const FilterMethod = enum(u8) {
 };
 
 const Filter = enum(u8) {
+    const Self = @This();
+
     none = 0,
     sub = 1,
     up = 2,
     average = 3,
     paeth = 4,
+
+    fn filterNone(input: []const u8, output: *std.ArrayList(u8)) !void {
+        try output.appendSlice(input);
+    }
+
+    pub inline fn filter(self: Self, input: []const u8, output: *std.ArrayList(u8)) !void {
+        switch (self) {
+            .none => try filterNone(input, output),
+            else => @panic("TODO"),
+        }
+    }
 };
 
 const InterlaceMethod = enum(u8) {
@@ -125,6 +138,23 @@ const ImageInfos = struct {
     pub inline fn allowsPalette(self: Self) bool {
         return std.mem.containsAtLeast(ColorType, &.{ .indexed, .rgb, .rgba }, 1, &.{self.color_type});
     }
+
+    pub inline fn entryByteSize(self: Self) u3 {
+        return switch (self.color_type) {
+            .grayscale, .indexed => 1,
+            .grayscale_alpha => 2,
+            .rgb => 3,
+            .rgba => 4,
+        };
+    }
+
+    pub inline fn pixelBitSize(self: Self) u32 {
+        return self.bit_depth * self.entryByteSize();
+    }
+
+    pub inline fn lineByteSize(self: Self) u32 {
+        return (self.pixelBitSize() * self.width + 7) / 8;
+    }
 };
 
 const AdaptiveFilterType = enum(u8) {
@@ -148,6 +178,7 @@ fn checkSignature(stream: *std.io.StreamSource) !void {
 
 fn checkCrc(chunk_header: ChunkHeader, data: []const u8, expected: u32) !void {
     var crc = std.hash.Crc32.init();
+
     crc.update(&std.mem.toBytes(chunk_header.type));
     crc.update(data);
 
@@ -197,6 +228,8 @@ fn loadHeader(stream: *std.io.StreamSource, image_infos: *ImageInfos) !void {
 
     // Interlace method
     image_infos.interlace_method = try reader.readEnum(InterlaceMethod, .big);
+
+    std.debug.print("{}\n", .{image_infos});
 }
 
 fn loadPalette(
@@ -247,6 +280,16 @@ fn loadPalette(
     maybe_palette.* = palette;
 }
 
+fn defilter(image_infos: ImageInfos, input: []const u8, output: *std.ArrayList(u8)) !void {
+    _ = output;
+    const scanline_size = image_infos.width + 1;
+
+    for (0..image_infos.height) |y| {
+        const scanline = input[scanline_size * y .. scanline_size * (y + 1)];
+        std.debug.print("{any}\n", .{scanline});
+    }
+}
+
 fn loadData(
     allocator: std.mem.Allocator,
     stream: *std.io.StreamSource,
@@ -255,10 +298,6 @@ fn loadData(
     image: *root.Image,
 ) !void {
     if (maybe_palette == null and image_infos.color_type == .indexed) {
-        return Error.InvalidData;
-    }
-
-    if (maybe_palette != null and !image_infos.allowsPalette()) {
         return Error.InvalidData;
     }
 
@@ -272,8 +311,8 @@ fn loadData(
     try std.compress.zlib.decompress(reader, temp_data_writer);
 
     switch (image_infos.interlace_method) {
-        .none => {},
-        .adam7 => {},
+        .none => try defilter(image_infos, temp_data.items, &image.data),
+        .adam7 => @panic("Not implemented yet"),
     }
 
     try image.data.appendSlice(temp_data.items);
