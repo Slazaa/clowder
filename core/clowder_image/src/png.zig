@@ -190,14 +190,10 @@ fn checkCrc(chunk_header: ChunkHeader, data: []const u8, expected: u32) !void {
 fn loadHeader(stream: *std.io.StreamSource, image_infos: *ImageInfos) !void {
     const reader = stream.reader();
 
-    // Size
     image_infos.width = try reader.readInt(u32, .big);
     image_infos.height = try reader.readInt(u32, .big);
 
-    // Bit depth
     image_infos.bit_depth = try reader.readInt(u8, .big);
-
-    // Color type
     image_infos.color_type = try reader.readEnum(ColorType, .big);
 
     if (image_infos.color_type == .grayscale and
@@ -220,16 +216,11 @@ fn loadHeader(stream: *std.io.StreamSource, image_infos: *ImageInfos) !void {
         return Error.InvalidImageHeader;
     }
 
-    // Compression method
     image_infos.compression_method = try reader.readEnum(CompressionMethod, .big);
-
-    // Filter method
     image_infos.filter_method = try reader.readEnum(FilterMethod, .big);
-
-    // Interlace method
     image_infos.interlace_method = try reader.readEnum(InterlaceMethod, .big);
 
-    std.debug.print("{}\n", .{image_infos});
+    std.debug.print("{}\n", .{image_infos.*});
 }
 
 fn loadPalette(
@@ -280,13 +271,64 @@ fn loadPalette(
     maybe_palette.* = palette;
 }
 
-fn defilter(image_infos: ImageInfos, input: []const u8, output: *std.ArrayList(u8)) !void {
-    _ = output;
+fn defilter(
+    image_infos: ImageInfos,
+    maybe_palette: ?std.ArrayList(root.Rgb24),
+    input: []const u8,
+    output: *std.ArrayList(u8),
+) !void {
+    const entry_size = image_infos.entryByteSize();
     const scanline_size = image_infos.width + 1;
 
     for (0..image_infos.height) |y| {
         const scanline = input[scanline_size * y .. scanline_size * (y + 1)];
+
+        const filter = scanline[0];
+        const data = scanline[1..];
+
         std.debug.print("{any}\n", .{scanline});
+
+        _ = filter;
+
+        var i: usize = 0;
+
+        while (i < data.len) : (i += entry_size) {
+            const entry = data[i .. i + entry_size];
+
+            const color = switch (image_infos.color_type) {
+                .indexed => blk: {
+                    const index = entry[0];
+
+                    const palette = maybe_palette.?;
+                    const palette_entry = palette.items[index];
+
+                    break :blk root.Rgba32{
+                        .red = palette_entry.red,
+                        .green = palette_entry.green,
+                        .blue = palette_entry.blue,
+                        .alpha = 255,
+                    };
+                },
+                .rgb => root.Rgba32{
+                    .red = entry[0],
+                    .green = entry[1],
+                    .blue = entry[2],
+                    .alpha = 255,
+                },
+                .rgba => root.Rgba32{
+                    .red = entry[0],
+                    .green = entry[1],
+                    .blue = entry[2],
+                    .alpha = entry[3],
+                },
+                else => @panic("Not implemented yet"),
+            };
+
+            try output.append(color.red);
+            try output.append(color.green);
+            try output.append(color.blue);
+            try output.append(color.alpha);
+        }
     }
 }
 
@@ -311,7 +353,7 @@ fn loadData(
     try std.compress.zlib.decompress(reader, temp_data_writer);
 
     switch (image_infos.interlace_method) {
-        .none => try defilter(image_infos, temp_data.items, &image.data),
+        .none => try defilter(image_infos, maybe_palette, temp_data.items, &image.data),
         .adam7 => @panic("Not implemented yet"),
     }
 
@@ -356,6 +398,8 @@ pub fn loadFromStream(allocator: std.mem.Allocator, stream: *std.io.StreamSource
 
     while (true) {
         const chunk_header = try ChunkHeader.loadFromStream(stream);
+
+        std.debug.print("{}\n", .{chunk_header});
 
         if (chunk_header.type == .IEND) {
             break;

@@ -86,7 +86,7 @@ You can run examples but writting `zig build example-<example_name>`.For
 example, `zig build example-triangle` will run the triangle example.
 
 ## Install ⚙️
-You can install Clowder using the `zig fetch` command.
+You can install Clowder using the `zig fetch`.
 ```
 zig fetch --save https://github.com/Slazaa/clowder/archive/<last-commit-hash>.tar.gz
 ```

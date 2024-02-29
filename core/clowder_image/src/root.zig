@@ -33,6 +33,12 @@ pub fn Rgb(comptime T: type) type {
 
 pub const Rgb24 = Rgb(u8);
 
+pub fn Rgba(comptime T: type) type {
+    return struct { red: T, green: T, blue: T, alpha: T };
+}
+
+pub const Rgba32 = Rgba(u8);
+
 pub fn loadImageFromPath(allocator: std.mem.Allocator, path: []const u8) !Image {
     const file = try std.fs.cwd().openFile(path, .{});
     defer file.close();

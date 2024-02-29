@@ -97,7 +97,7 @@ fn initSystem(app: *clw.App) !void {
     const tile_image = try clw.loadImageFromPath(app.allocator, tile_path);
     defer tile_image.deinit();
 
-    const piece = try spawnPiece(app, tile_image, .l);
+    const piece = try spawnPiece(app, tile_image, .i);
     _ = piece;
 }
 
@@ -122,7 +122,7 @@ pub fn main() !void {
             initWindowSystem,
             initSystem,
         },
-        .systems = &.{fallSystem},
+        // .systems = &.{fallSystem},
     });
 
     defer app.deinit();

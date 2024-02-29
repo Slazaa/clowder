@@ -226,8 +226,6 @@ pub fn deltaSystem(app: *root.App) !void {
 
     const target = 1 / fps_comp[0];
 
-    std.debug.print("{d:.2}\n", .{(target - delta_comp.value) * 1_000_000});
-
     if (delta_comp.value < target) {
         std.time.sleep(@intFromFloat((target - delta_comp.value) * 1_000_000));
     }
