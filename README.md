@@ -82,8 +82,10 @@ try app.run();
 That's it! Now you know what ECS is.
 
 ## Examples 📝
-You can run examples but writting `zig build example-<example_name>`.For
-example, `zig build example-triangle` will run the triangle example.
+To run the examples, you first need to clone the repo and then, you can run
+them but writting `zig build example-<example_name>`.For example,
+`zig build example-triangle` will run the triangle example in the `examples`
+directory.
 
 ## Install ⚙️
 You can install Clowder using the `zig fetch`.
