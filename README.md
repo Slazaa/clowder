@@ -84,7 +84,7 @@ That's it! Now you know what ECS is.
 ## Examples 📝
 All available examples are in the `examples` directory.
 
-To run an example, you first need to clone the repo and you can then run them
+To run an example, you first need to clone the repo and you can then run it
 by writting `zig build example-<example_name>`.For example,
 `zig build example-triangle` will run the triangle example.
 
