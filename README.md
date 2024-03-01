@@ -84,8 +84,9 @@ That's it! Now you know what ECS is.
 ## Examples 📝
 To run the examples, you first need to clone the repo and then, you can run
 them but writting `zig build example-<example_name>`.For example,
-`zig build example-triangle` will run the triangle example in the `examples`
-directory.
+`zig build example-triangle` will run the triangle example.
+
+All available examples are in the `examples` directory.
 
 ## Install ⚙️
 You can install Clowder using the `zig fetch`.
