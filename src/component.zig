@@ -1,5 +1,7 @@
-const material = @import("component/material.zig");
+const root = @import("root.zig");
 
-pub const DefaultMaterial = material.DefaultMaterial;
-pub const Material = material.Material;
-pub const Mesh = @import("component/mesh.zig").Mesh;
+pub const BaseMaterial = @import("component/material.zig").Material;
+pub const BaseMesh = @import("component/mesh.zig").Mesh;
+
+pub const Material = BaseMaterial(root.default_render_backend);
+pub const Mesh = BaseMesh(.{});

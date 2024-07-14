@@ -7,5 +7,3 @@ pub fn Material(comptime backend: root.Backend) type {
         .opengl => @import("base/opengl/Material.zig"),
     };
 }
-
-pub const DefaultMaterial = Material(root.default_backend);

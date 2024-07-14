@@ -3,8 +3,8 @@ const std = @import("std");
 const clw = @import("clowder");
 
 fn initWindowSystem(app: *clw.App) !void {
-    const window = app.getFirst(.{clw.DefaultWindow}, .{}).?;
-    const window_comp = app.getComponent(window, clw.DefaultWindow).?;
+    const window = app.getFirst(.{clw.Window}, .{}).?;
+    const window_comp = app.getComponent(window, clw.Window).?;
 
     window_comp.setTitle("Triangle");
 }
@@ -12,7 +12,7 @@ fn initWindowSystem(app: *clw.App) !void {
 fn initSystem(app: *clw.App) !void {
     const triangle = app.spawn();
 
-    try app.addComponent(triangle, try clw.Mesh(.{}).init(
+    try app.addComponent(triangle, try clw.Mesh.init(
         app.allocator,
         &.{
             .{ -200, 150, 0 },

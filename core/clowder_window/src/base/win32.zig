@@ -5,6 +5,8 @@ const root = @import("../root.zig");
 
 const math = @import("clowder_math");
 
+const Vec2u = math.Vec2u;
+
 const Window = @import("../window.zig");
 
 pub const Error = error{
@@ -74,19 +76,13 @@ fn windowCallback(h_wnd: nat.HWND, msg: nat.UINT, w_param: nat.WPARAM, l_param: 
     return 0;
 }
 
-pub const Config = packed struct {
-    resizable: bool = false,
-    maximize_box: bool = false,
-    minimize_box: bool = true,
-};
-
 pub const Base = struct {
     const Self = @This();
 
     handle: nat.HWND,
     device_context: nat.HDC,
 
-    pub fn init(title: [:0]const u8, x: i32, y: i32, width: u32, height: u32, config: Config) Error!Self {
+    pub fn init(title: [:0]const u8, x: i32, y: i32, width: u32, height: u32, config: root.Config) Error!Self {
         const instance = nat.GetModuleHandleA(null) orelse {
             return error.CouldNotGetInstance;
         };
@@ -143,11 +139,11 @@ pub const Base = struct {
         _ = nat.DestroyWindow(self.handle);
     }
 
-    pub fn getSize(self: Self) math.Vec2u {
+    pub fn getSize(self: Self) Vec2u {
         var rect: nat.RECT = undefined;
         _ = nat.GetWindowRect(self.handle, &rect);
 
-        return .{ @intCast(rect.right - rect.left), @intCast(rect.bottom - rect.top) };
+        return Vec2u{ @intCast(rect.right - rect.left), @intCast(rect.bottom - rect.top) };
     }
 
     pub fn setTitle(self: Self, title: [:0]const u8) void {

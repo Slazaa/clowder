@@ -9,7 +9,7 @@ const root = @import("root.zig");
 const Color = @import("Color.zig");
 
 pub const Config = struct {
-    render_backend: root.Backend = .opengl,
+    render_backend: root.Backend = root.default_backend,
     window_backend: window.Backend = window.default_backend,
 };
 
@@ -26,12 +26,13 @@ pub fn Renderer(comptime config: Config) type {
         const backend_base = switch (config.render_backend) {
             .opengl => switch (config.window_backend) {
                 .win32 => @import("base/opengl/win32/Renderer.zig"),
+                else => @compileError("Unhandled OS."),
             },
         };
 
         pub const Error = backend_base.Error;
 
-        const Window = window.Window(config.window_backend);
+        const Window = window.BaseWindow(config.window_backend);
 
         const Base = backend_base.Base;
 

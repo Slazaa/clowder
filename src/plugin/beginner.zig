@@ -2,8 +2,8 @@ const std = @import("std");
 
 const root = @import("../root.zig");
 
-pub const DefaultShader = struct { root.DefaultShader };
-pub const DefaultRenderMaterial = struct { root.DefaultRenderMaterial };
+pub const Shader = struct { root.Shader };
+pub const RenderMaterial = struct { root.RenderMaterial };
 
 pub const Fps = struct { f32 };
 
@@ -15,7 +15,7 @@ pub const Delta = struct {
 pub fn initWindowSystem(app: *root.App) !void {
     const main_window = app.spawn();
 
-    var window = try root.DefaultWindow.init(
+    var window = try root.Window.init(
         app.allocator,
         "Clowder Window",
         .center,
@@ -25,7 +25,7 @@ pub fn initWindowSystem(app: *root.App) !void {
 
     errdefer window.deinit();
 
-    const renderer = try root.Renderer(.{}).init(window.context());
+    const renderer = try root.Renderer.init(window.context());
     errdefer renderer.deinit();
 
     try app.addComponent(main_window, window);
@@ -33,8 +33,8 @@ pub fn initWindowSystem(app: *root.App) !void {
 }
 
 pub fn initCameraSystem(app: *root.App) !void {
-    const window_entity = app.getFirst(.{ root.DefaultWindow, root.Renderer(.{}) }, .{}).?;
-    const window = app.getComponent(window_entity, root.DefaultWindow).?;
+    const window_entity = app.getFirst(.{ root.Window, root.Renderer }, .{}).?;
+    const window = app.getComponent(window_entity, root.Window).?;
 
     const camera = app.spawn();
 
@@ -91,7 +91,7 @@ pub fn initDefaultShaderSystem(app: *root.App) !void {
     var shader_report = std.ArrayList(u8).init(app.allocator);
     defer shader_report.deinit();
 
-    const shader = root.DefaultShader.fromSources(
+    const shader = root.Shader.fromSources(
         vertex_shader_source,
         fragment_shader_source,
         &shader_report,
@@ -100,17 +100,17 @@ pub fn initDefaultShaderSystem(app: *root.App) !void {
         return err;
     };
 
-    try app.addComponent(shader_entity, DefaultShader{shader});
+    try app.addComponent(shader_entity, Shader{shader});
 }
 
 pub fn initDefaultMaterialSystem(app: *root.App) !void {
-    const default_shader_entity = app.getFirst(.{DefaultShader}, .{}).?;
-    const default_shader = app.getComponent(default_shader_entity, DefaultShader).?[0];
+    const default_shader_entity = app.getFirst(.{Shader}, .{}).?;
+    const default_shader = app.getComponent(default_shader_entity, Shader).?[0];
 
     const material_entity = app.spawn();
 
-    const material = root.DefaultRenderMaterial.init(default_shader, null, null);
-    try app.addComponent(material_entity, DefaultRenderMaterial{material});
+    const material = root.RenderMaterial.init(default_shader, null, null);
+    try app.addComponent(material_entity, RenderMaterial{material});
 }
 
 pub fn initDeltaSystem(app: *root.App) !void {
@@ -122,11 +122,11 @@ pub fn initDeltaSystem(app: *root.App) !void {
 }
 
 pub fn deinitWindowSystem(app: *root.App) void {
-    var query = app.query(.{ root.DefaultWindow, root.Renderer(.{}) }, .{});
+    var query = app.query(.{ root.Window, root.Renderer }, .{});
 
     while (query.next()) |entity| {
-        const window = app.getComponent(entity, root.DefaultWindow).?;
-        const renderer = app.getComponent(entity, root.Renderer(.{})).?;
+        const window = app.getComponent(entity, root.Window).?;
+        const renderer = app.getComponent(entity, root.Renderer).?;
 
         window.deinit();
         renderer.deinit();
@@ -134,10 +134,10 @@ pub fn deinitWindowSystem(app: *root.App) void {
 }
 
 pub fn deinitMeshSystem(app: *root.App) void {
-    var mesh_query = app.query(.{root.Mesh(.{})}, .{});
+    var mesh_query = app.query(.{root.Mesh}, .{});
 
     while (mesh_query.next()) |mesh_entity| {
-        const mesh = app.getComponent(mesh_entity, root.Mesh(.{})).?;
+        const mesh = app.getComponent(mesh_entity, root.Mesh).?;
         mesh.deinit();
     }
 }
@@ -157,13 +157,13 @@ fn transformFromEntity(app: *root.App, entity: root.Entity) root.Transform {
 }
 
 pub fn renderSystem(app: *root.App) !void {
-    const window_entity = app.getFirst(.{ root.DefaultWindow, root.Renderer(.{}) }, .{}).?;
+    const window_entity = app.getFirst(.{ root.Window, root.Renderer }, .{}).?;
 
-    const window = app.getComponentPtr(window_entity, root.DefaultWindow).?;
-    const renderer = app.getComponent(window_entity, root.Renderer(.{})).?;
+    const window = app.getComponentPtr(window_entity, root.Window).?;
+    const renderer = app.getComponent(window_entity, root.Renderer).?;
 
-    const default_render_material_entity = app.getFirst(.{DefaultRenderMaterial}, .{}).?;
-    const default_render_material = app.getComponent(default_render_material_entity, DefaultRenderMaterial).?[0];
+    const default_render_material_entity = app.getFirst(.{RenderMaterial}, .{}).?;
+    const default_render_material = app.getComponent(default_render_material_entity, RenderMaterial).?[0];
 
     try window.update();
 
@@ -180,15 +180,15 @@ pub fn renderSystem(app: *root.App) !void {
 
         const camera_transform = app.getComponent(camera_entity, root.Transform) orelse root.Transform.default;
 
-        var mesh_query = app.query(.{root.Mesh(.{})}, .{});
+        var mesh_query = app.query(.{root.Mesh}, .{});
 
         while (mesh_query.next()) |mesh_entity| {
-            const mesh = app.getComponent(mesh_entity, root.Mesh(.{})).?;
+            const mesh = app.getComponent(mesh_entity, root.Mesh).?;
 
             const transform = transformFromEntity(app, mesh_entity);
 
             const render_material = blk: {
-                const material = app.getComponent(mesh_entity, root.DefaultMaterial) orelse {
+                const material = app.getComponent(mesh_entity, root.Material) orelse {
                     break :blk default_render_material;
                 };
 

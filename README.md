@@ -103,4 +103,4 @@ _ = @import("clowder").link(b, exe);
 This framework is open source and free to use. For that reason, donations would
 be greatly appreciated. Thank you. ❤
 
-My Patreon: https://www.patreon.com/Slazaa
+XMR: 8AHjMsMYAdJX8NFjxDecYT6g5w2rNGUkpVtJ367MPpPuFK4c1v1Bqwm2r6wVxkRYrjiUaa53kMyEuZPBPEXGYqbUPipW5PB

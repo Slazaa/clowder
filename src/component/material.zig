@@ -12,5 +12,3 @@ pub fn Material(comptime render_backend: root.RenderBackend) type {
         texture: ?Texture = null,
     };
 }
-
-pub const DefaultMaterial = Material(root.default_render_backend);

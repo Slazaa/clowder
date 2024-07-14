@@ -5,5 +5,3 @@ pub fn Shader(comptime backend: root.Backend) type {
         .opengl => @import("base/opengl/shader.zig").Shader,
     };
 }
-
-pub const DefaultShader = Shader(root.default_backend);

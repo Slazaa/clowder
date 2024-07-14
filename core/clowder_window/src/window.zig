@@ -10,15 +10,10 @@ pub const WindowPos = union(enum) {
     at: math.Vec2i,
 };
 
-pub const Config = packed struct {
+pub const Config = struct {
     resizable: bool = false,
     maximize_box: bool = false,
     minimize_box: bool = true,
-};
-
-pub const default_backend: root.Backend = switch (builtin.os.tag) {
-    .windows => .win32,
-    else => @compileError("OS not supported"),
 };
 
 /// Represents a window.
@@ -28,6 +23,7 @@ pub fn Window(comptime backend: root.Backend) type {
 
         const base = switch (backend) {
             .win32 => @import("base/win32.zig"),
+            .x11 => @import("base/x11.zig"),
         };
 
         pub const Error = base.Error;
@@ -52,10 +48,19 @@ pub fn Window(comptime backend: root.Backend) type {
                 .at => |at| at,
             };
 
-            const base_config: base.Config = @bitCast(config);
+            const base_ = try Base.init(
+                title,
+                position_vec[0],
+                position_vec[1],
+                size[0],
+                size[1],
+                config,
+            );
+
+            errdefer base_.deinit();
 
             return .{
-                .base = try Base.init(title, position_vec[0], position_vec[1], size[0], size[1], base_config),
+                .base = base_,
                 .events = std.ArrayList(root.Event).init(allocator),
             };
         }
@@ -242,5 +247,3 @@ pub fn Window(comptime backend: root.Backend) type {
         }
     };
 }
-
-pub const DefaultWindow = Window(default_backend);

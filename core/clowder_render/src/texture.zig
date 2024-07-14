@@ -5,5 +5,3 @@ pub fn Texture(comptime backend: root.Backend) type {
         .opengl => @import("base/opengl/Texture.zig"),
     };
 }
-
-pub const DefaultTexture = Texture(root.default_backend);

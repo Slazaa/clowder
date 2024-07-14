@@ -7,8 +7,8 @@ pub fn Mesh(comptime config: root.RendererConfig) type {
     return struct {
         const Self = @This();
 
-        const Renderer = root.Renderer(config);
-        const RenderObject = root.RenderObject(config.render_backend);
+        const Renderer = root.BaseRenderer(config);
+        const RenderObject = root.BaseRenderObject(config.render_backend);
 
         positions: std.ArrayList(f32),
         colors: std.ArrayList(f32),

@@ -13,9 +13,11 @@ pub usingnamespace window;
 
 pub const Camera = render.Camera;
 pub const Color = render.Color;
-pub const DefaultRenderMaterial = render.DefaultMaterial;
-pub const DefaultShader = render.DefaultShader;
-pub const DefaultTexture = render.DefaultTexture;
+pub const BaseRenderer = render.BaseRenderer;
+pub const BaseRenderObject = render.BaseRenderObject;
+pub const BaseRenderMaterial = render.BaseMaterial;
+pub const BaseShader = render.BaseShader;
+pub const BaseTexture = render.BaseTexture;
 pub const RenderBackend = render.Backend;
 pub const RenderMaterial = render.Material;
 pub const Renderer = render.Renderer;

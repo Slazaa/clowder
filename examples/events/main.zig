@@ -27,8 +27,8 @@ const SelectedColor = struct {
 };
 
 fn initWindowSystem(app: *clw.App) !void {
-    const window = app.getFirst(.{clw.DefaultWindow}, .{}).?;
-    const window_comp = app.getComponent(window, clw.DefaultWindow).?;
+    const window = app.getFirst(.{clw.Window}, .{}).?;
+    const window_comp = app.getComponent(window, clw.Window).?;
 
     window_comp.setTitle("Events");
 }
@@ -51,8 +51,8 @@ fn initSystem(app: *clw.App) !void {
 }
 
 fn system(app: *clw.App) !void {
-    const window_entity = app.getFirst(.{clw.DefaultWindow}, .{}).?;
-    const window = app.getComponent(window_entity, clw.DefaultWindow).?;
+    const window_entity = app.getFirst(.{clw.Window}, .{}).?;
+    const window = app.getComponent(window_entity, clw.Window).?;
 
     const rect = app.getFirst(.{SelectedColor}, .{}).?;
 

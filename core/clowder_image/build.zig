@@ -14,7 +14,7 @@ pub fn build(b: *std.Build) void {
 
     const lib = b.addStaticLibrary(.{
         .name = "clowder_image",
-        .root_source_file = .{ .path = "src/root.zig" },
+        .root_source_file = .{ .cwd_relative = "src/root.zig" },
         .target = target,
         .optimize = optimize,
     });
@@ -24,7 +24,7 @@ pub fn build(b: *std.Build) void {
     b.installArtifact(lib);
 
     const tests = b.addTest(.{
-        .root_source_file = .{ .path = "src/root.zig" },
+        .root_source_file = .{ .cwd_relative = "src/root.zig" },
         .target = target,
         .optimize = optimize,
     });
@@ -41,7 +41,7 @@ pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
     }
 
     module = b.createModule(.{
-        .root_source_file = .{ .path = thisPath() ++ "/src/root.zig" },
+        .root_source_file = .{ .cwd_relative = thisPath() ++ "/src/root.zig" },
         .imports = &.{
             .{
                 .name = "clowder_math",

@@ -17,7 +17,7 @@ pub fn build(b: *std.Build) void {
 
     const lib = b.addStaticLibrary(.{
         .name = "clowder_render",
-        .root_source_file = .{ .path = "src/root.zig" },
+        .root_source_file = .{ .cwd_relative = "src/root.zig" },
         .target = target,
         .optimize = optimize,
     });
@@ -29,18 +29,19 @@ pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
     step.linkLibC();
 
     switch (builtin.os.tag) {
-        .windows => step.linkSystemLibrary("gdi32"),
+        .windows => {
+            step.linkSystemLibrary("gdi32");
+            step.linkSystemLibrary("opengl32");
+        },
         else => {},
     }
-
-    step.linkSystemLibrary("opengl32");
 
     if (module) |m| {
         return m;
     }
 
     module = b.createModule(.{
-        .root_source_file = .{ .path = thisPath("/src/root.zig") },
+        .root_source_file = .{ .cwd_relative = thisPath("/src/root.zig") },
         .imports = &.{
             .{
                 .name = "clowder_image",

@@ -5,5 +5,3 @@ pub fn RenderObject(comptime backend: root.Backend) type {
         .opengl => @import("base/opengl/RenderObject.zig"),
     };
 }
-
-pub const DefaultRenderObject = RenderObject(root.default_backend);

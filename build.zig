@@ -49,7 +49,7 @@ fn installExamples(b: *std.Build, target: std.Build.ResolvedTarget, optimize: st
 
     const exe = b.addExecutable(.{
         .name = name,
-        .root_source_file = .{ .path = source_filename },
+        .root_source_file = .{ .cwd_relative = source_filename },
         .target = target,
         .optimize = optimize,
     });
@@ -75,7 +75,7 @@ pub fn build(b: *std.Build) !void {
 
     const lib = b.addStaticLibrary(.{
         .name = "clowder",
-        .root_source_file = .{ .path = "src/root.zig" },
+        .root_source_file = .{ .cwd_relative = "src/root.zig" },
         .target = target,
         .optimize = optimize,
     });
@@ -96,7 +96,7 @@ pub fn build(b: *std.Build) !void {
     }
 
     const unit_tests = b.addTest(.{
-        .root_source_file = .{ .path = "src/root.zig" },
+        .root_source_file = .{ .cwd_relative = "src/root.zig" },
         .target = target,
         .optimize = optimize,
     });
@@ -118,7 +118,7 @@ pub fn build(b: *std.Build) !void {
 
 pub fn link(b: *std.Build, step: *std.Build.Step.Compile) *std.Build.Module {
     const module = b.createModule(.{
-        .root_source_file = .{ .path = thisPath("/src/root.zig") },
+        .root_source_file = .{ .cwd_relative = thisPath("/src/root.zig") },
         .imports = &.{
             .{
                 .name = "clowder_ecs",

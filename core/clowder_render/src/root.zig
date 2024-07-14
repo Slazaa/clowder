@@ -6,20 +6,15 @@ const render_object = @import("render_object.zig");
 const shader = @import("shader.zig");
 const texture = @import("texture.zig");
 
+pub const BaseMaterial = material.Material;
+pub const BaseRenderer = renderer.Renderer;
+pub const BaseRenderObject = render_object.RenderObject;
+pub const BaseShader = shader.Shader;
+pub const BaseTexture = texture.Texture;
 pub const Camera = @import("Camera.zig");
 pub const Color = @import("Color.zig");
-pub const DefaultMaterial = material.DefaultMaterial;
-pub const DefaultRenderObject = render_object.DefaultRenderObject;
-pub const DefaultShader = shader.DefaultShader;
-pub const DefaultTexture = texture.DefaultTexture;
-pub const Material = material.Material;
-pub const Renderer = renderer.Renderer;
 pub const RendererConfig = renderer.Config;
 pub const RendererContext = renderer.Context;
-pub const RenderObject = render_object.RenderObject;
-pub const Shader = shader.Shader;
-pub const ShaderType = shader.Type;
-pub const Texture = texture.Texture;
 pub const Transform = @import("Transform.zig");
 pub const Viewport = @import("Viewport.zig");
 
@@ -28,3 +23,9 @@ pub const Backend = enum {
 };
 
 pub const default_backend = Backend.opengl;
+
+pub const Material = BaseMaterial(default_backend);
+pub const Renderer = BaseRenderer(.{});
+pub const RenderObject = BaseRenderObject(default_backend);
+pub const Shader = BaseShader(default_backend);
+pub const Texture = Texture(default_backend);
